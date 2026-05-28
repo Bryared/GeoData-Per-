@@ -7,11 +7,11 @@ import {
   classifyDegradation, 
   generateGeoJSON,
   type TelemetryData 
-} from '../utils/engine';
-import { useDimension } from '../context/DimensionContext';
-import { cn } from '../utils/cn';
+} from '../../utils/engine';
+import { useDimension } from '../../context/DimensionContext';
+import { cn } from '../../utils/cn';
 
-export function Prescriptions() {
+export function RecetasVRA() {
   const { dimension, setDimension } = useDimension();
   const [baseSensors, setBaseSensors] = useState<TelemetryData[]>([]);
   
@@ -44,12 +44,28 @@ export function Prescriptions() {
 
     const savedCEC = localStorage.getItem('soil_default_cec');
     if (savedCEC) setDefaultCEC(Number(savedCEC));
+    
+    // Sync landslide state from other modules
+    const savedLandslide = localStorage.getItem('landslide_simulated');
+    if (savedLandslide) setLandslideSimulated(savedLandslide === 'true');
   };
 
   useEffect(() => {
     loadSettingsAndSensors();
     window.addEventListener('storage', loadSettingsAndSensors);
-    return () => window.removeEventListener('storage', loadSettingsAndSensors);
+    
+    // Listen to local changes
+    const interval = setInterval(() => {
+      const savedLandslide = localStorage.getItem('landslide_simulated');
+      if (savedLandslide) {
+        setLandslideSimulated(savedLandslide === 'true');
+      }
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('storage', loadSettingsAndSensors);
+      clearInterval(interval);
+    };
   }, []);
 
   // 1. Theme Color Palettes
@@ -130,21 +146,19 @@ export function Prescriptions() {
         
         let nodeClass = 'Moderada';
         let mainVal = s.ec; // displacement or temp
-        let helperVal = s.soilMoisture; // moisture or spread
 
         if (id.startsWith('SL-INCL')) {
-          mainVal = parseFloat((2.1 + (idx * 1.5) + Math.random() * 0.4).toFixed(1)); // Displacement mm/h
-          helperVal = parseFloat((45 + (idx * 10) + Math.random() * 2).toFixed(1)); // Moisture saturation %
+          mainVal = parseFloat((2.1 + (idx * 1.5) + (s.id.charCodeAt(0) % 5) * 0.1).toFixed(1)); // Displacement mm/h
           nodeClass = mainVal > 4.5 ? 'Crítica' : mainVal > 3.0 ? 'Severa' : 'Moderada';
         } else if (id.startsWith('TH-PYRO')) {
-          mainVal = parseFloat((55.0 + (idx * 25.0) + Math.random() * 5).toFixed(1)); // Fire temp
-          helperVal = parseFloat((75.0 + (idx * 5.0) + Math.random() * 1).toFixed(1)); // Spread index
+          mainVal = parseFloat((55.0 + (idx * 25.0) + (s.id.charCodeAt(0) % 5) * 1.5).toFixed(1)); // Fire temp
           nodeClass = mainVal > 95 ? 'Crítica' : mainVal > 70 ? 'Severa' : 'Moderada';
         } else {
-          mainVal = parseFloat((0.08 + Math.random() * 0.25).toFixed(3)); // Seismic Accel g
-          helperVal = parseFloat((2.4 + Math.random() * 3.5).toFixed(1)); // Freq Hz
+          mainVal = parseFloat((0.08 + (s.id.charCodeAt(0) % 5) * 0.05).toFixed(3)); // Seismic Accel g
           nodeClass = mainVal > 0.2 ? 'Severa' : 'Moderada';
         }
+
+        const helperVal = parseFloat((45 + (idx * 10) + (s.id.charCodeAt(0) % 5)).toFixed(1)); // Moisture saturation %
 
         // 2.1 Prescriptive algorithms
         // A. Landslide anchoring force (kN) = mass * sin(slopeAngle) * stress
@@ -185,12 +199,12 @@ export function Prescriptions() {
       let helperVal = s.soilMoisture; // As ppm or infiltration
 
       if (id.startsWith('WQ-WELL')) {
-        mainVal = parseFloat((0.008 + (idx * 0.012) + Math.random() * 0.002).toFixed(4)); // Pb ppm
-        helperVal = parseFloat((0.002 + (idx * 0.003) + Math.random() * 0.001).toFixed(4)); // As ppm
+        mainVal = parseFloat((0.008 + (idx * 0.012) + 0.001).toFixed(4)); // Pb ppm
+        helperVal = parseFloat((0.002 + (idx * 0.003) + 0.001).toFixed(4)); // As ppm
         nodeClass = mainVal > 0.03 ? 'Crítica' : mainVal > 0.015 ? 'Severa' : 'Moderada';
       } else {
-        mainVal = parseFloat((14.5 + idx * 8.5 + Math.random() * 1.5).toFixed(1)); // Caudal m3/s
-        helperVal = parseFloat((3.4 + idx * 1.2 + Math.random() * 0.2).toFixed(1)); // Infiltration m/d
+        mainVal = parseFloat((14.5 + idx * 8.5 + 1.2).toFixed(1)); // Caudal m3/s
+        helperVal = parseFloat((3.4 + idx * 1.2 + 0.1).toFixed(1)); // Infiltration m/d
         nodeClass = 'Moderada';
       }
 
@@ -514,7 +528,7 @@ export function Prescriptions() {
                         <p className="text-[10px] text-slate-400 uppercase">
                           {p.id.startsWith('SL-INCL') ? 'Desplazam.' : p.id.startsWith('TH-PYRO') ? 'Foco Calor' : 'Aceleración'}
                         </p>
-                        <p className="text-sm font-bold text-rose-450 mt-0.5">
+                        <p className="text-sm font-bold text-rose-455 mt-0.5">
                           {p.id.startsWith('SL-INCL') ? `${p.ec} mm/h` : p.id.startsWith('TH-PYRO') ? `${p.ec}°C` : `${p.ec}g`}
                         </p>
                       </div>
@@ -587,10 +601,10 @@ export function Prescriptions() {
                       {p.id.startsWith('SL-INCL') && (
                         <div className="bg-rose-500/5 border border-rose-500/10 p-3.5 rounded-lg mb-3">
                           <div className="flex items-start">
-                            <Anchor className="w-5 h-5 text-rose-450 mr-3 shrink-0 mt-0.5" />
+                            <Anchor className="w-5 h-5 text-rose-400 mr-3 shrink-0 mt-0.5" />
                             <div>
                               <h4 className="text-xs font-semibold text-rose-450 mb-0.5">Anclajes de Contención Activos</h4>
-                              <p className="text-xl font-bold text-slate-100">{p.anchorForce} <span className="text-xs font-normal text-rose-450">kN</span></p>
+                              <p className="text-xl font-bold text-slate-100">{p.anchorForce} <span className="text-xs font-normal text-rose-400">kN</span></p>
                               <p className="text-[9px] text-slate-500 mt-0.5">Resistencia de talud calculada por física de suelos Herschel-Bulkley</p>
                             </div>
                           </div>
@@ -714,7 +728,7 @@ export function Prescriptions() {
                           { name: 'Algodón Pima', score: 78.4, note: 'Aptitud Buena, resistente a calor', color: 'bg-amber-500', factor: 'Monitorear estrés térmico foliar' },
                           { name: 'Plátano Orgánico', score: 62.1, note: 'Aptitud Moderada, sensible a sodio', color: 'bg-amber-600', factor: 'Sensible a CE > 4.5 dS/m' }
                         ].map((crop, idx) => (
-                          <div key={idx} className="bg-slate-800/20 border border-slate-800/85 p-3 rounded-lg flex flex-col space-y-1.5 hover:border-slate-700/50 transition-colors">
+                          <div key={idx} className="bg-slate-800/20 border border-slate-880 p-3 rounded-lg flex flex-col space-y-1.5 hover:border-slate-700/50 transition-colors">
                             <div className="flex justify-between items-center text-xs">
                               <span className="font-bold text-slate-200">{crop.name}</span>
                               <div className="flex items-center space-x-1.5">
@@ -736,7 +750,7 @@ export function Prescriptions() {
 
                     <div className="bg-slate-900/50 border border-slate-850 p-4 rounded-xl flex flex-col justify-between">
                       <div className="space-y-3">
-                        <div className="flex items-center space-x-2 text-xs font-bold text-slate-355 text-slate-200">
+                        <div className="flex items-center space-x-2 text-xs font-bold text-slate-200">
                           <Compass className="w-4 h-4 text-emerald-400" />
                           <span>Parámetros Físico-Químicos Activos</span>
                         </div>
@@ -802,7 +816,7 @@ export function Prescriptions() {
                           <ArrowRight className="w-4 h-4 text-slate-600 shrink-0" />
                           <div className="text-center">
                             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Tránsito Principal</p>
-                            <p className={cn("mt-0.5 transition-colors", landslideSimulated ? "text-rose-400 line-through decoration-rose-500" : "text-slate-300")}>
+                            <p className={cn("mt-0.5 transition-colors", landslideSimulated ? "text-rose-450 line-through decoration-rose-500" : "text-slate-300")}>
                               {landslideSimulated ? "Panamericana (KM 385)" : "Panamericana Norte"}
                             </p>
                           </div>
@@ -815,7 +829,7 @@ export function Prescriptions() {
 
                         {/* Schematic map visualization */}
                         <div className="bg-slate-950/80 p-3.5 rounded-lg border border-slate-850 flex flex-col space-y-2.5">
-                          <div className="flex justify-between text-[10px] text-slate-500 font-bold uppercase">
+                           <div className="flex justify-between text-[10px] text-slate-500 font-bold uppercase">
                             <span>Esquema de Grafo Vial Nacional (MTC)</span>
                             <span>Costo de Aristas</span>
                           </div>
@@ -853,10 +867,11 @@ export function Prescriptions() {
                             setTimeout(() => {
                               setRecalculatingLogistics(false);
                               setLandslideSimulated(true);
+                              localStorage.setItem('landslide_simulated', 'true');
                             }, 1200);
                           }}
                           disabled={recalculatingLogistics || landslideSimulated}
-                          className="w-full sm:w-auto flex items-center justify-center px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg transition-all text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full sm:w-auto flex items-center justify-center px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-450 border border-rose-500/30 rounded-lg transition-all text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {recalculatingLogistics ? (
                             <>
@@ -877,6 +892,7 @@ export function Prescriptions() {
                           <button
                             onClick={() => {
                               setLandslideSimulated(false);
+                              localStorage.setItem('landslide_simulated', 'false');
                             }}
                             className="w-full sm:w-auto flex items-center justify-center px-4 py-2.5 bg-slate-850 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-lg transition-all text-xs font-bold"
                           >
@@ -889,7 +905,7 @@ export function Prescriptions() {
 
                     <div className="bg-slate-900/50 border border-slate-850 p-4 rounded-xl flex flex-col justify-between space-y-4">
                       <div className="space-y-3">
-                        <div className="flex justify-between items-center text-xs font-bold text-slate-350">
+                        <div className="flex justify-between items-center text-xs font-bold text-slate-200">
                           <span>Estado Operativo:</span>
                           <span className={cn("px-2 py-0.5 rounded text-[10px] font-black uppercase",
                             landslideSimulated ? "bg-rose-500/10 text-rose-450 border border-rose-500/20 animate-pulse" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
@@ -916,7 +932,7 @@ export function Prescriptions() {
 
                       {/* Live animated alerts */}
                       {landslideSimulated ? (
-                        <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[10px] text-rose-400 leading-relaxed space-y-1.5 animate-fade-in">
+                        <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[10px] text-rose-450 leading-relaxed space-y-1.5 animate-fade-in">
                           <p className="font-bold flex items-center">
                             <AlertCircle className="w-3.5 h-3.5 mr-1.5 shrink-0" />
                             [N.E.X.U.S. 4D] Alerta de Interrupción
@@ -975,7 +991,7 @@ export function Prescriptions() {
 
               {dimension === 'desastres' && (
                 <div className="p-3 bg-slate-800/30 border border-slate-700/40 rounded-lg text-xs space-y-1.5">
-                  <p className="font-bold text-rose-400">Fondo de Pérdidas & Daños</p>
+                  <p className="font-bold text-rose-450">Fondo de Pérdidas & Daños</p>
                   <p className="text-[11px] text-slate-400 leading-relaxed">
                     Valorización estimada según el costo de reconstrucción urbana de viviendas e infraestructura rural ahorrados por la alerta con 48h de antelación.
                   </p>

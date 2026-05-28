@@ -1,7 +1,7 @@
 import { Map, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
-export function SATAgroPro() {
+export function VisorCatastral() {
   const [loading, setLoading] = useState(true);
 
   const handleRefresh = () => {

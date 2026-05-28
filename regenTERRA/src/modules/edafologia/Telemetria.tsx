@@ -1,21 +1,21 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Activity, Wifi, Battery, Play, Pause, RefreshCw, Globe, Database, Cpu, AlertTriangle, Flame, AlertCircle, Droplets } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { type TelemetryData } from '../utils/engine';
-import { soilAPI } from '../utils/api';
-import { useDimension } from '../context/DimensionContext';
-import { cn } from '../utils/cn';
+import { type TelemetryData } from '../../utils/engine';
+import { soilAPI } from '../../utils/api';
+import { useDimension } from '../../context/DimensionContext';
+import { cn } from '../../utils/cn';
 
 const getNodeIcon = (id: string) => {
   if (id.startsWith('TH-PYRO')) return <Flame className="w-4 h-4 mr-2 text-orange-400" />;
-  if (id.startsWith('SL-INCL')) return <AlertTriangle className="w-4 h-4 mr-2 text-rose-450 animate-pulse" />;
+  if (id.startsWith('SL-INCL')) return <AlertTriangle className="w-4 h-4 mr-2 text-rose-455 animate-pulse" />;
   if (id.startsWith('WQ-WELL')) return <Droplets className="w-4 h-4 mr-2 text-cyan-400" />;
   if (id.startsWith('HM-FLOW')) return <Activity className="w-4 h-4 mr-2 text-blue-400 animate-pulse" />;
   if (id.startsWith('ANP-ALRT')) return <AlertCircle className="w-4 h-4 mr-2 text-emerald-400 animate-pulse" />;
   return <Cpu className="w-4 h-4 mr-2 text-slate-400" />;
 };
 
-export function Telemetry() {
+export function Telemetria() {
   const { dimension, setDimension } = useDimension();
   const [baseSensors, setBaseSensors] = useState<TelemetryData[]>([]);
   const [selectedSensorId, setSelectedSensorId] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function Telemetry() {
   const theme = useMemo(() => {
     if (dimension === 'desastres') {
       return {
-        primary: 'text-rose-400',
+        primary: 'text-rose-405',
         accent: 'rose',
         border: 'border-rose-500/20',
         bg: 'bg-rose-500/5',
@@ -426,7 +426,7 @@ export function Telemetry() {
                 {sensors.map(s => {
                   const isSelected = selectedSensor?.id === s.id;
                   let signalColor = 'text-emerald-400';
-                  if (s.rssi < -95) signalColor = 'text-rose-450';
+                  if (s.rssi < -95) signalColor = 'text-rose-455';
                   else if (s.rssi < -80) signalColor = 'text-amber-400';
 
                   return (
@@ -539,7 +539,7 @@ export function Telemetry() {
                 {loraLogs.map((log, index) => {
                   let logColor = 'text-emerald-400/90';
                   if (log.includes('WARNING') || log.includes('ALARM') || log.includes('FLAME') || log.includes('⚠️') || log.includes('🔥')) {
-                    logColor = 'text-rose-450 font-black animate-pulse';
+                    logColor = 'text-rose-455 font-black animate-pulse';
                   } else if (log.includes('SYSTEM') || log.includes('SATELLITE')) {
                     logColor = 'text-cyan-400';
                   }
@@ -591,7 +591,7 @@ export function Telemetry() {
                       <p className="text-slate-400 text-[10px]">
                         {selectedSensor.id.startsWith('SL-INCL') ? 'Ángulo Talud' : selectedSensor.id.startsWith('TH-PYRO') ? 'Threat Lvl' : 'Aceleración'}
                       </p>
-                      <p className="text-base font-bold text-rose-450 mt-1">
+                      <p className="text-base font-bold text-rose-455 mt-1">
                         {selectedSensor.id.startsWith('SL-INCL') ? '24.2°' : selectedSensor.id.startsWith('TH-PYRO') ? `${selectedSensor.pH}/10` : `${selectedSensor.ec}g`}
                       </p>
                     </div>
@@ -628,7 +628,7 @@ export function Telemetry() {
                         {selectedSensor.id.startsWith('WQ-WELL') ? `${selectedSensor.ec} ppm` : selectedSensor.id.startsWith('HM-FLOW') ? `${selectedSensor.ec} m³/s` : `${selectedSensor.ec} Ha`}
                       </p>
                     </div>
-                    <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/40">
+                    <div className="bg-slate-850 p-2.5 rounded-lg border border-slate-700/40">
                       <p className="text-slate-400 text-[10px]">
                         {selectedSensor.id.startsWith('WQ-WELL') ? 'Arsenic (As)' : selectedSensor.id.startsWith('HM-FLOW') ? 'Infiltración' : 'Perd. Dosel'}
                       </p>
@@ -741,17 +741,17 @@ export function Telemetry() {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-slate-300 font-medium">Superficial</span>
-                        <span className="text-rose-400 font-semibold">{selectedSensor.depths.depth20cm.ec}</span>
+                        <span className="text-rose-455 font-semibold">{selectedSensor.depths.depth20cm.ec}</span>
                         <span className="text-slate-300 font-semibold">{selectedSensor.depths.depth20cm.moisture}%</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-slate-300 font-medium">Intermedia</span>
-                        <span className="text-rose-400 font-semibold">{selectedSensor.depths.depth40cm.ec}</span>
+                        <span className="text-rose-455 font-semibold">{selectedSensor.depths.depth40cm.ec}</span>
                         <span className="text-slate-300 font-semibold">{selectedSensor.depths.depth40cm.moisture}%</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-slate-300 font-medium">Basamento</span>
-                        <span className="text-rose-400 font-semibold">{selectedSensor.depths.depth60cm.ec}</span>
+                        <span className="text-rose-455 font-semibold">{selectedSensor.depths.depth60cm.ec}</span>
                         <span className="text-slate-300 font-semibold">{selectedSensor.depths.depth60cm.moisture}%</span>
                       </div>
                       <p className="text-[10px] text-slate-500 italic mt-2 leading-relaxed">
@@ -790,8 +790,8 @@ export function Telemetry() {
                 </div>
               </div>
             ) : (
-              <div className="glass-panel border border-slate-700/50 rounded-xl p-12 text-center text-slate-500 italic">
-                Seleccione un nodo sensor para ver su perfil.
+              <div className="glass-panel border border-slate-700/50 rounded-xl p-6 text-center text-slate-400">
+                Selecciona un nodo sensor para graficar perfiles físicos.
               </div>
             )}
           </div>
@@ -910,14 +910,14 @@ export function Telemetry() {
               {dimension === 'desastres' && (
                 <>
                   <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-5">
-                    <h4 className="font-semibold text-slate-200 text-sm mb-1.5 text-rose-450">NBR (Fuego Activo)</h4>
+                    <h4 className="font-semibold text-slate-200 text-sm mb-1.5 text-rose-455">NBR (Fuego Activo)</h4>
                     <p className="text-xs text-slate-400 mb-3">Índice de severidad de quemaduras forestales en Amazonía por banda NIR/SWIR.</p>
                     <code className="text-[10px] bg-slate-950 p-2 rounded block text-slate-400 text-center font-mono font-bold">
                       NBR = (B8 - B12) / (B8 + B12)
                     </code>
                   </div>
                   <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-5">
-                    <h4 className="font-semibold text-slate-200 text-sm mb-1.5 text-orange-450">NDFI (Tala Selectiva)</h4>
+                    <h4 className="font-semibold text-slate-200 text-sm mb-1.5 text-orange-455">NDFI (Tala Selectiva)</h4>
                     <p className="text-xs text-slate-400 mb-3">Monitoreo fraccionario de cobertura verde para alertar sobre degradación forestal.</p>
                     <code className="text-[10px] bg-slate-950 p-2 rounded block text-slate-400 text-center font-mono font-bold">
                       NDFI = (Green - SWIR) / (Green + SWIR)
@@ -967,7 +967,7 @@ export function Telemetry() {
                 <Database className={cn("w-5 h-5 mr-2", theme.primary)} />
                 Calibración de Banda Terrestre
               </h3>
-              <p className="text-xs text-slate-400 leading-relaxed mb-6">
+              <p className="text-xs text-slate-450 leading-relaxed mb-6">
                 Los datos satelitales a menudo sufren distorsión atmosférica. GeoTERRA aplica una correlación matemática con los sensores terrestres para ajustar las curvas espectrales en tiempo real.
               </p>
 
@@ -995,7 +995,7 @@ export function Telemetry() {
 }
 
 function CalibrationItem({ name, value, status }: { name: string; value: string; status: 'success' | 'warning' | 'error' }) {
-  const dotColor = status === 'success' ? 'bg-emerald-400' : status === 'warning' ? 'bg-amber-400' : 'bg-rose-450';
+  const dotColor = status === 'success' ? 'bg-emerald-400' : status === 'warning' ? 'bg-amber-400' : 'bg-rose-455';
   return (
     <div className="flex justify-between items-center p-3 rounded-lg bg-slate-800/40 border border-slate-700/40 text-xs">
       <div>

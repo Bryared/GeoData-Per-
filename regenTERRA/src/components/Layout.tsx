@@ -9,6 +9,7 @@ const navigation = [
   { name: 'Telemetría', href: '/telemetry', icon: Activity },
   { name: 'SAT-Agro Pro', href: '/satagro', icon: Compass },
   { name: 'Mapa 3D', href: '/map', icon: Map },
+  { name: 'Mando de Riesgos', href: '/riesgos', icon: ShieldAlert },
   { name: 'Recetas VRA', href: '/prescriptions', icon: ClipboardList },
   { name: 'Configuración', href: '/settings', icon: Settings },
   { name: 'Pitch Geotón', href: '/pitch', icon: Presentation },
