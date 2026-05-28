@@ -5,6 +5,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianG
 import { cn } from '../utils/cn';
 import { classifyDegradation, type TelemetryData } from '../utils/engine';
 import { soilAPI } from '../utils/api';
+import { useDimension } from '../context/DimensionContext';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export function Dashboard() {
   const [panelTab, setPanelTab] = useState<'ml' | 'pinn'>('ml');
 
   // Global Operational Dimension Switcher (Edafo-OS, N.E.X.U.S 4D, O.M.N.I TERRA)
-  const [dimension, setDimension] = useState<'alimentaria' | 'desastres' | 'recursos'>('alimentaria');
+  const { dimension, setDimension } = useDimension();
 
   const loadData = async () => {
     const savedClimate = (localStorage.getItem('soil_climate') as any) || 'normal';
