@@ -1,4 +1,4 @@
-# 🌌 Arquitectura Actual e Integración Inmediata de GeoTERRA Perú
+# 🏗️ Arquitectura Actual e Integración Inmediata de GeoTERRA Perú
 ### *Fase de MVP Funcional e Integración de Servicios Locales (Geotón Perú 2026)*
 
 Este documento detalla la **arquitectura técnica real implementada en el repositorio**, el stack operativo del MVP actual, el esquema SQL espacial maestro de PostgreSQL/PostGIS y el protocolo inmediato de conexión para integrar el frontend y los motores analíticos locales.
@@ -7,7 +7,7 @@ Este documento detalla la **arquitectura técnica real implementada en el reposi
 
 ## 📂 1. Mapa Real del Repositorio Políglota
 
-El ecosistema de **GeoData Perú** ya no es solo una suite conceptual; se encuentra físicamente estructurado en tu disco local de la siguiente manera:
+El ecosistema de **GeoData Perú** se encuentra físicamente estructurado en tu disco local de la siguiente manera:
 
 ```text
 c:/Users/bryan/GeoData Perú/
@@ -70,7 +70,7 @@ c:/Users/bryan/GeoData Perú/
 
 ---
 
-## 🗄️ 3. Esquema SQL Maestro e Inferencia Ciberfísica: `agrodefense_prod`
+## 🗄️ 3. Esquema SQL Maestro e Inferencia Territorial: `agrodefense_prod`
 
 El motor de base de datos relacional de Supabase/PostgreSQL opera como un **motor de cálculo espacial reactivo** de alto rendimiento en PL/pgSQL.
 
@@ -162,27 +162,11 @@ FOR EACH ROW EXECUTE FUNCTION auditar_colapso_vial();
 
 ## 🔄 4. Conexiones Pendientes para la Integración Total (MVP funcional)
 
-Para que el ecosistema pase de ser servicios aislados a operar en un bucle ciberfísico completamente integrado de extremo a extremo, estas son las 3 conexiones inmediatas a desarrollar:
+Para que el ecosistema pase de ser servicios aislados a operar en un bucle completamente integrado de extremo a extremo, estas son las 3 conexiones inmediatas a desarrollar:
 
 ### 1. Conexión del Frontend al Microservicio de Golang (`nexus-router`)
 *   **Estado actual:** La página `MandoRiesgos.tsx` simula el bypass logístico localmente.
-*   **Acción requerida:** Reemplazar la simulación de bypass local por una petición HTTP `POST` real al microservicio en Go expuesto en el puerto `9000` cada vez que el usuario presione "Simular Huaico":
-    ```typescript
-    const response = await fetch('http://localhost:9000/api/v1/nexus/reroute', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event_id: 'HUAICO-CASMA-KM385',
-        event_type: 'HUAICO',
-        severity: 5,
-        latitude: -9.5333,
-        longitude: -78.3000,
-        timestamp: new Date().toISOString()
-      })
-    });
-    const data = await response.json();
-    console.log("Nueva ruta óptima calculada por Go en", data.solver_time_ms, "ms");
-    ```
+*   **Acción requerida:** Reemplazar la simulación de bypass local por una petición HTTP `POST` real al microservicio en Go expuesto en el puerto `9000` cada vez que el usuario presione "Simular Huaico".
 
 ### 2. Sincronización del Frontend al resolvedor PyTorch PINN (`SATagro`)
 *   **Estado actual:** El resolvedor de física e inferencias corre localmente en scripts de Python.
