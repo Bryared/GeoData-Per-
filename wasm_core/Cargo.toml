@@ -1,0 +1,19 @@
+[package]
+name = "wasm_core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Bryan Vargas <cto@geoterra.pe>", "Isaac Ñaupa <data@geoterra.pe>"]
+description = "Módulo de aceleración analítica computacional compilado a WebAssembly (Wasm) para GeoTERRA"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2.92"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
