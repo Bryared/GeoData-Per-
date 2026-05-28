@@ -1,0 +1,67 @@
+# Walkthrough: Sat-Agro Digital Infrastructure
+
+¡El proyecto **Sat-Agro (Valle Chancay-Lambayeque)** ha sido completado y se encuentra completamente funcional de extremo a extremo! Hemos conectado la hermosa e interactiva interfaz web (Dashboard 4D) con el cerebro físico-matemático en el servidor Python, logrando una sincronización en tiempo real.
+
+---
+
+## 🛠️ Cambios Realizados y Mejoras de Integración
+
+Hemos implementado una arquitectura de **bucle cerrado (Closed-Loop)** donde el cliente y el servidor se comunican fluidamente utilizando REST APIs de alto rendimiento:
+
+1. **Simulación Física en Caliente Bidireccional (PINN Live Solver)**:
+   - Modificamos `dashboard.js` para enviar solicitudes `POST /api/simulate` al servidor Python cuando el usuario arrastra los controles deslizantes (Sliders) de **Riego Aplicado**, **Nivel Freático**, **Escenario Climático** o **Aplicar Corrector**.
+   - El servidor ejecuta dinámicamente las ecuaciones físicas en caliente (Balance de Richards para agua y Convección-Dispersión para transporte de sales) y recalcula los **Residuos de Pérdida Física del modelo PINN**.
+   - Estos datos exactos son devueltos a la interfaz web, actualizando instantáneamente las métricas y gráficos de convergencia del panel derecho en tiempo real, ¡mostrando cómo la IA predictiva calibra su física!
+
+2. **Carga y Sincronización API-First**:
+   - Actualizamos `loadDatasets()` en `dashboard.js` para consumir los endpoints directos `/api/data` y `/api/prescriptions` de forma nativa.
+   - Mantuvimos un **esquema de contingencia local robusto (Offline Fallback)**: si el servidor REST no está disponible o se abre localmente sin servidor (vía `file://`), el dashboard autogenera lecturas y prescripciones equivalentes en caché para asegurar que la app nunca falle.
+
+3. **Digitalización Catastral en Caliente**:
+   - El botón **"Digitalizar Parcela"** permite dibujar un polígono catastral directamente sobre el mapa satelital Leaflet.js. Al guardarlo, se envía un `POST /api/parcels/add` al servidor Python, que calcula dinámicamente su tipo de suelo, umbrales y simula 30 días de lecturas de campo e índices Sentinel-2 en caliente, sincronizando la base de datos de inmediato.
+
+---
+
+## 🔬 Verificación y Ejecución Exitosa
+
+Ejecutamos los componentes y validamos su salida de forma secuencial:
+
+### 1. Generador de Datos del Suelo e Índices Satelitales
+Corrimos `data/sensor_simulator.py` con éxito para generar la base de datos espacial-temporal inicial para 90 días en el Valle Chancay-Lambayeque:
+```bash
+python data/sensor_simulator.py
+```
+> [!NOTE]
+> Salida exitosa: Generación física de 90 lecturas diarias para 4 parcelas catastrales (Arroz, Caña de azúcar, Espárrago Verde y Quinua) guardada correctamente en `data/simulated_data.json`.
+
+### 2. Solución PINN y Motor de Prescripción
+Corrimos `brain/pinn_model.py` para procesar de forma analítica el flujo de Richards, la lixiviación de sales y la dosificación de enmiendas de Yeso Agrícola:
+```bash
+python brain/pinn_model.py
+```
+> [!TIP]
+> Salida exitosa: El motor de prescripción química y de riego lixiviante calculó las directrices espaciales y de volumen, guardando las recomendaciones en `brain/prescriptions.json`.
+
+### 3. Lanzamiento del Servidor Backend Activo
+Iniciamos con éxito el servidor de APIs y archivos estáticos de Sat-Agro:
+```bash
+python server.py
+```
+> [!IMPORTANT]
+> El servidor se encuentra **activo y corriendo en el puerto 8000** (`http://localhost:8000`), listo para recibir peticiones y servir la web premium.
+
+---
+
+## 🌍 Guía para Visualizar y Experimentar la Plataforma
+
+Para ver el sistema en acción con toda su fluidez de datos e interfaz premium:
+
+1. Abre tu navegador e ingresa a la dirección:
+   **[http://localhost:8000](http://localhost:8000)** (o directamente a [http://localhost:8000/dashboard/index.html](http://localhost:8000/dashboard/index.html))
+2. También puedes ver la propuesta de negocio y el pitch interactivo con calculadora de ROI ingresando a:
+   **[http://localhost:8000/dashboard/pitch.html](http://localhost:8000/dashboard/pitch.html)**
+
+### Interacciones Clave en el Dashboard:
+* **Simulador Físico**: Modifica los controles de Riego, Nivel Freático y Clima en el panel inferior central. Observarás cómo el panel derecho de **Diagnóstico de Convergencia PINN** recibe los residuos calculados en vivo por el servidor.
+* **Capas Satelitales**: Cambia los botones de capa sobre el mapa para alternar entre **Salinidad (SI)**, **Vigor (NDVI)** y **Humedad (VWC)**.
+* **Digitalizador Catastral**: Haz clic en *"Iniciar Dibujo en Mapa"*, haz 3 o 4 clics en el mapa para delinear tu nueva parcela, escribe un código y haz clic en *"Guardar Parcela"*. Verás cómo se procesa en el servidor Python y aparece en tu lista lateral con todos sus datos e historial simulado en tiempo real.

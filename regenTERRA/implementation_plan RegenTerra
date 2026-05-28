@@ -1,0 +1,111 @@
+# Plan de Implementación: Completitud Extremo a Extremo de TERRA-REGEN (Edafo-OS)
+
+Este plan detalla el desarrollo e integración de los módulos clave del "Cerebro de Suelos" de **TERRA-REGEN** (Edafo-OS), completando las páginas pendientes, mejorando los algoritmos físicos de prescripción y creando una experiencia de usuario de nivel internacional (Deep Tech & High-Fidelity).
+
+---
+
+## 🎯 Objetivo General
+Completar de principio a fin el sistema operativo e edafológico de **TERRA-REGEN (Edafo-OS)** para el sector de **Bajo Piura**, fusionando el motor matemático e hidráulico de *Sat-Agro* (ecuaciones físicas, requerimientos de lavado LF, requerimiento de yeso GR, créditos de carbono) con la interfaz de alto rendimiento en **React + TypeScript + Vite + Three.js**.
+
+---
+
+## 💻 Resumen de Módulos a Desarrollar
+
+1. **Página de Telemetría IoT y Satelital (Completa)**:
+   - Reemplazar el placeholder por un centro de operaciones interactivo de telemetría.
+   - Consola en tiempo real de paquetes LoRaWAN (simulador de stream con controles de pausa/reproducción).
+   - Cuadrícula de sensores físicos instalados en Bajo Piura, con indicadores de batería solar, señal RSSI y lecturas multinivel (20cm, 40cm, 60cm).
+   - Visor de pasadas satelitales Sentinel-2 (Tile `T17MQT`), estimación de índices multiespectrales (NDVI, NDWI, NDSI).
+   
+2. **Página de Configuración de Edafo-OS (Completa)**:
+   - Panel de control para calibración de constantes edafológicas por el Ingeniero Agrónomo.
+   - Ajustes de tolerancias por cultivo (Arroz, Caña de Azúcar, Quinua, Espárrago, Algodón).
+   - Parámetros de simulación física del suelo (Humedad, ESP objetivo, CIC promedio, Arcilla/Limo).
+   - Configuración de la pasarela LoRaWAN y simulación de fallas de red.
+
+3. **Mejoras del Mapa 3D Kriging (`Map3D.tsx`)**:
+   - Permitir cambiar la capa interpolada en tiempo real: Salinidad (CE), Humedad Volumétrica (%), pH, o Nitrógeno (N).
+   - Añadir los sensores físicos en el espacio 3D como esferas flotantes interactivas con etiquetas emergentes (`Html` de `@react-three/drei`).
+   - Controles premium: Auto-rotación ajustable, exageración de relieve, toggle de malla (wireframe) y grilla de referencia.
+
+4. **Mejoras en Recetas VRA y Módulo de Carbono (`Prescriptions.tsx`)**:
+   - **Calculadora de Créditos de Carbono (MRV)**: Integrar un módulo financiero para estimar la captura de $CO_2$ equivalente ($tCO_2e/ha/año$) basada en la adición de enmiendas y la materia orgánica del suelo (MOS), con proyección a 5 años en gráficos Recharts.
+   - **Exportador GeoJSON VRA**: Hacer funcional el botón "JSON VRA" para generar y descargar un archivo GeoJSON real de la prescripción espacial para tractores inteligentes.
+   - **Cálculo de Fracción de Lavado (LF)**: Añadir tarjetas interactivas de dosis hídrica de lavado para desplazar las sales.
+
+5. **Mejoras del Dashboard Global (`Dashboard.tsx`)**:
+   - Conectar un selector de "Condiciones Climáticas de Piura" (Normal, Fenómeno de El Niño, Sequía Extrema) que recalcule en caliente todas las variables y modifique las tendencias del dashboard con micro-animaciones fluidas.
+
+---
+
+## 📁 Propuesta de Archivos a Modificar y Crear
+
+```
+src/
+├── App.tsx                   <-- [MODIFY] Registrar las nuevas páginas importadas
+├── pages/
+│   ├── Dashboard.tsx         <-- [MODIFY] Agregar selector climático y acciones dinámicas
+│   ├── Map3D.tsx             <-- [MODIFY] Capas Kriging, sensores 3D flotantes y controles
+│   ├── Prescriptions.tsx     <-- [MODIFY] Créditos de carbono, descargas GeoJSON y dosis LF
+│   ├── Telemetry.tsx         <-- [NEW] Consola de telemetría IoT, perfiles multinivel y satelitales
+│   └── Settings.tsx          <-- [NEW] Configuración de tolerancia, LoRaWAN y calibración
+└── utils/
+    └── engine.ts             <-- [MODIFY] Expandir datos mock, simulador climático e interpolación Kriging
+```
+
+---
+
+## 🛠️ Detalles de Implementación por Componente
+
+### 1. `src/utils/engine.ts` (Motor Edafológico)
+- Implementar la lógica del clima: el clima afectará el gradiente de salinidad y humedad de los sensores simulados.
+- Agregar soporte en `simulateKriging` para interpolar múltiples atributos: `ec`, `soilMoisture`, `pH`, `nitrogen`.
+- Estructurar el generador de GeoJSON para que cree coordenadas válidas en Piura correspondientes a cada sensor con sus dosis de yeso calculadas.
+
+### 2. `src/pages/Telemetry.tsx` [NEW]
+- **Pantalla Dividida**:
+  - *Izquierda*: Vista de nodos activos (tarjetas detalladas con micro-gráficos de batería, RSSI, y gráfico de perfil de suelo a 20, 40 y 60cm).
+  - *Derecha*: Consola retro-futurista de red LoRaWAN en vivo con logs simulados ("Receiving packet from Node-1002, payload: 0a3b2e... decrypted EC=4.2 dS/m, pH=8.1").
+  - *Sección Satélite*: Tarjeta animada que muestra el estado de Sentinel-2 con un escáner de espectros multiespectrales (NDVI para vigor foliar, NDSI para costras salinas en superficie).
+
+### 3. `src/pages/Settings.tsx` [NEW]
+- Formulario de configuración con sliders y tablas de datos editables.
+- Formulario para simular la adición de un nuevo sensor en Bajo Piura (ingresando Lat, Lng, Cultivo).
+- Parámetros de red LoRaWAN (Frecuencia, SF, AppKey) con un botón de "Probar Conexión de Puerta de Enlace" que active una alerta visual de éxito/error.
+
+### 4. `src/pages/Map3D.tsx` [MODIFY]
+- Crear el selector de variables (`ec`, `moisture`, `pH`, `nitrogen`).
+- Al cambiar la variable, recalcular el array de alturas y colores de la geometría del terreno con transiciones suaves.
+- Dibujar una esfera brillante para cada sensor en su posición 3D, y al hacer clic sobre ella, mostrar un modal de HTML integrado en 3D (`Html` interactivo) con el estado del sensor.
+- Agregar sliders para el factor de altura (exageración vertical) y controles de órbita.
+
+### 5. `src/pages/Prescriptions.tsx` [MODIFY]
+- Añadir sección **"Sumidero de Carbono & Créditos (MRV)"**:
+  - Panel premium que calcula el carbono secuestrado proyectado a 5 años.
+  - Gráfico de barras o área con la acumulación monetaria y de toneladas de $CO_2$ evitadas.
+- Función `downloadGeoJSON(sensorId)`:
+  - Genera un archivo GeoJSON real con la forma de la parcela y la propiedad `gypsum_dosage_ton_ha` y lo descarga al computador del usuario.
+- Explicación y cálculo de la Fracción de Lavado (LF) con los parámetros activos.
+
+### 6. `src/pages/Dashboard.tsx` [MODIFY]
+- Agregar el selector de clima global en la barra de herramientas del dashboard.
+- Modificar dinámicamente los KPIs principales cuando se cambia el clima (por ejemplo, en Fenómeno de El Niño la humedad sube radicalmente, en Sequía la salinización por capilaridad se dispara).
+
+---
+
+## 📈 Plan de Verificación
+
+### Pruebas de Integración y Construcción
+1. Correr `npm run build` localmente para asegurar la compatibilidad estricta con TypeScript 5.x/6.x y Vite.
+2. Comprobar que no haya errores de importación de Three.js ni colisiones de tipos con `@types/three` y `@react-three/fiber`.
+
+### Pruebas de Interfaz de Usuario
+- Probar la navegación completa de la barra lateral (Dashboard ➔ Telemetría ➔ Mapa 3D ➔ Recetas VRA ➔ Configuración).
+- Verificar que el mapa 3D responda fluidamente al mouse (paneo, zoom y órbita) y que los botones de alternancia de capa funcionen.
+- Probar la descarga de archivos GeoJSON desde las tarjetas de prescripciones.
+- Monitorear que la consola de telemetría fluya en tiempo real sin congelar la renderización.
+
+---
+
+> [!NOTE]
+> Este plan unifica toda la física predictiva avanzada desarrollada en el prototipo original de Sat-Agro con un envoltorio visual interactivo moderno en regenTERRA, logrando una propuesta comercial y tecnológica extremadamente sólida y ganadora.
