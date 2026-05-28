@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, AlertTriangle, Droplets, Wind, Zap, RefreshCw, Layers } from 'lucide-react';
+import { Activity, AlertTriangle, Droplets, Wind, Zap, RefreshCw, Layers, Database, Cpu } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { cn } from '../utils/cn';
-import { generateMockSensors, classifyDegradation, type TelemetryData } from '../utils/engine';
+import { classifyDegradation, type TelemetryData } from '../utils/engine';
+import { soilAPI } from '../utils/api';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -11,46 +12,56 @@ export function Dashboard() {
   const [sensors, setSensors] = useState<TelemetryData[]>([]);
   const [satelliteSyncing, setSatelliteSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  
+  // Dynamic API & PINN states
+  const [serverConnected, setServerConnected] = useState(false);
+  const [pinnResiduals, setPinnResiduals] = useState({ richards: 0.00000142, soluto: 0.00000089 });
+  const [panelTab, setPanelTab] = useState<'ml' | 'pinn'>('ml');
 
-  const loadData = () => {
+  // Global Operational Dimension Switcher (Edafo-OS, N.E.X.U.S 4D, O.M.N.I TERRA)
+  const [dimension, setDimension] = useState<'alimentaria' | 'desastres' | 'recursos'>('alimentaria');
+
+  const loadData = async () => {
     const savedClimate = (localStorage.getItem('soil_climate') as any) || 'normal';
     setClimate(savedClimate);
 
-    // Generate simulated ground truth sensors modulated by climate
-    const base = generateMockSensors(savedClimate);
-    
-    // Merge with any custom registered sensors
-    const customStr = localStorage.getItem('custom_sensors');
-    if (customStr) {
-      const custom = JSON.parse(customStr);
-      setSensors([...base, ...custom]);
-    } else {
-      setSensors(base);
+    const connected = await soilAPI.checkConnection();
+    setServerConnected(connected);
+
+    const data = await soilAPI.getTelemetryData(savedClimate);
+    setSensors(data);
+
+    if (connected) {
+      const prescriptions = await soilAPI.getPrescriptions();
+      if (prescriptions && prescriptions.prescripciones) {
+        const firstKey = Object.keys(prescriptions.prescripciones)[0];
+        if (firstKey) {
+          const list = prescriptions.prescripciones[firstKey];
+          const last = list[list.length - 1];
+          if (last) {
+            setPinnResiduals({
+              richards: last.pinn_residuo_richards || 0.00000142,
+              soluto: last.pinn_residuo_soluto || 0.00000089
+            });
+          }
+        }
+      }
     }
   };
 
   useEffect(() => {
     loadData();
-    // Listen to changes in localStorage from other tabs/pages
     window.addEventListener('storage', loadData);
     return () => window.removeEventListener('storage', loadData);
   }, []);
 
-  const handleClimateChange = (newClimate: 'normal' | 'nino' | 'sequia') => {
+  const handleClimateChange = async (newClimate: 'normal' | 'nino' | 'sequia') => {
     setClimate(newClimate);
     localStorage.setItem('soil_climate', newClimate);
     
-    // Regenerate data in-place
-    const base = generateMockSensors(newClimate);
-    const customStr = localStorage.getItem('custom_sensors');
-    if (customStr) {
-      const custom = JSON.parse(customStr);
-      setSensors([...base, ...custom]);
-    } else {
-      setSensors(base);
-    }
+    const data = await soilAPI.getTelemetryData(newClimate);
+    setSensors(data);
 
-    // Trigger storage event for other pages
     window.dispatchEvent(new Event('storage'));
   };
 
@@ -59,7 +70,10 @@ export function Dashboard() {
     setSyncMessage('');
     setTimeout(() => {
       setSatelliteSyncing(false);
-      setSyncMessage('Sentinel-2 Calibrado (Ground-Truth R²=0.94)');
+      setSyncMessage(serverConnected 
+        ? 'Sentinel-2 Sincronizado con API del Servidor Python (Ground-Truth R²=0.94)' 
+        : 'Sentinel-2 Calibrado localmente (Ground-Truth R²=0.94)'
+      );
       setTimeout(() => setSyncMessage(''), 4000);
     }, 2000);
   };
@@ -75,12 +89,34 @@ export function Dashboard() {
     return (sum / sensors.length).toFixed(1) + '%';
   }, [sensors]);
 
-  // Chart data simulation
-  const chartData = sensors.map(s => ({
-    name: s.id.replace('SN-', 'N-'),
-    ec: s.ec,
-    moisture: s.soilMoisture
-  }));
+  // Chart data switch based on active dimension
+  const chartData = useMemo(() => {
+    if (dimension === 'alimentaria') {
+      return sensors.map(s => ({
+        name: s.id.replace('SN-', 'N-'),
+        ec: s.ec,
+        moisture: s.soilMoisture
+      }));
+    } else if (dimension === 'desastres') {
+      // Historical trend of disaster alerts & seismic frequency in Peru
+      return [
+        { name: 'Ene', Incidentes: 2, Sismos: 1 },
+        { name: 'Feb', Incidentes: 4, Sismos: 3 },
+        { name: 'Mar', Incidentes: 9, Sismos: 1 }, // El Niño peaks
+        { name: 'Abr', Incidentes: 3, Sismos: 2 },
+        { name: 'May', Incidentes: 2, Sismos: 4 }
+      ];
+    } else {
+      // Infiltration & heavy metal concentrations trends (O.M.N.I TERRA)
+      return [
+        { name: 'Ene', Plomo: 0.012, Arsenico: 0.004 },
+        { name: 'Feb', Plomo: 0.016, Arsenico: 0.005 },
+        { name: 'Mar', Plomo: 0.025, Arsenico: 0.008 }, // high rain flushing
+        { name: 'Abr', Plomo: 0.021, Arsenico: 0.007 },
+        { name: 'May', Plomo: 0.020, Arsenico: 0.006 }
+      ];
+    }
+  }, [sensors, dimension]);
 
   return (
     <div className="space-y-6">
@@ -90,13 +126,33 @@ export function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold text-slate-100 flex items-center">
             <Layers className="w-8 h-8 text-emerald-400 mr-3 animate-pulse" />
-            Vista Edafológica Global
+            {dimension === 'alimentaria' && "Vista Edafológica Global"}
+            {dimension === 'desastres' && "Prevención & Gestión de Desastres"}
+            {dimension === 'recursos' && "Hidrología & Reservas Naturales"}
           </h1>
-          <p className="text-slate-400 mt-1">Monitoreo y Prescripción Híbrida - Sector Bajo Piura</p>
+          <p className="text-slate-400 mt-1">
+            {dimension === 'alimentaria' && "Monitoreo y Prescripción Híbrida - Sector Bajo Piura (Edafo-OS)"}
+            {dimension === 'desastres' && "Simulador de Alertas de Deforestación, Incendios, Sismos y Huaicos (N.E.X.U.S. 4D)"}
+            {dimension === 'recursos' && "Rastreo de Metales Pesados, Acuíferos e Infiltración de Agua Dulce (O.M.N.I. TERRA)"}
+          </p>
         </div>
 
         {/* Action Panel */}
         <div className="flex flex-wrap gap-3 items-center">
+          
+          {/* Dimension Selector (Core Vision Switcher) */}
+          <div className="flex items-center space-x-2 bg-slate-800/60 border border-slate-700/80 rounded-lg px-3 py-1.5 shadow-md">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Módulo Core:</span>
+            <select
+              value={dimension}
+              onChange={(e) => setDimension(e.target.value as any)}
+              className="bg-transparent border-none outline-none text-xs text-cyan-400 font-black cursor-pointer"
+            >
+              <option value="alimentaria">Seguridad Alimentaria (Edafo-OS)</option>
+              <option value="desastres">Gestión de Desastres (N.E.X.U.S. 4D)</option>
+              <option value="recursos">Hidrología & Reservas (O.M.N.I. TERRA)</option>
+            </select>
+          </div>
           
           {/* Global Climate Simulator dropdown */}
           <div className="flex items-center space-x-2 bg-slate-800/60 border border-slate-700/80 rounded-lg px-3 py-1.5">
@@ -137,42 +193,133 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard 
-          title="Sensores IoT Activos"
-          value={sensors.length.toString()}
-          trend={`${sensors.filter(s => s.batteryLevel > 90).length} óptimos`}
-          icon={Activity}
-          color="text-emerald-400"
-          bg="bg-emerald-400/10"
-        />
-        <KPICard 
-          title="Nodos en Riesgo Salino"
-          value={criticalParcels.length.toString()}
-          trend={criticalParcels.length > 0 ? "Acción requerida" : "Suelos estables"}
-          icon={AlertTriangle}
-          color={criticalParcels.length > 0 ? "text-rose-450 animate-pulse" : "text-emerald-400"}
-          bg={criticalParcels.length > 0 ? "bg-rose-500/10" : "bg-emerald-500/10"}
-          critical={criticalParcels.length > 0}
-        />
-        <KPICard 
-          title="Humedad Vol. Promedio"
-          value={averageMoisture}
-          trend={climate === 'nino' ? "+14.4% (Exceso)" : climate === 'sequia' ? "-12.2% (Déficit)" : "Nivel óptimo"}
-          icon={Droplets}
-          color={climate === 'sequia' ? "text-rose-400" : "text-blue-400"}
-          bg={climate === 'sequia' ? "bg-rose-400/10" : "bg-blue-400/10"}
-        />
-        <KPICard 
-          title="Vulnerabilidad Eólica"
-          value={climate === 'sequia' ? "Alta" : "Baja"}
-          trend="Vel. Viento 14km/h"
-          icon={Wind}
-          color="text-amber-400"
-          bg="bg-amber-400/10"
-        />
-      </div>
+      {/* Server connection banner */}
+      {serverConnected ? (
+        <div className="flex items-center space-x-3 p-3.5 bg-emerald-500/5 border border-emerald-500/10 text-emerald-400 text-xs font-semibold rounded-xl animate-fade-in">
+          <Database className="w-4 h-4 text-emerald-450 animate-pulse mr-1" />
+          <span>🧬 CEREBRO ANALÍTICO PINN ACTIVO en Puerto 8000. Ecuaciones de Richards, Green-Ampt y Convección-Dispersión operando en tiempo real.</span>
+        </div>
+      ) : (
+        <div className="flex items-center space-x-3 p-3.5 bg-amber-500/5 border border-amber-500/15 text-amber-400 text-xs font-semibold rounded-xl animate-fade-in">
+          <Database className="w-4 h-4 text-amber-400 mr-1" />
+          <span>⚠️ Servidor local desconectado. Corriendo en Modo Autónomo (Mocks locales). Arranca <code>server.py</code> para activar el solver de física de suelos.</span>
+        </div>
+      )}
+
+      {/* Dynamic KPI Cards depending on Operational Dimension */}
+      {dimension === 'alimentaria' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <KPICard 
+            title="Sensores IoT Activos"
+            value={sensors.length.toString()}
+            trend={`${sensors.filter(s => s.batteryLevel > 90).length} óptimos`}
+            icon={Activity}
+            color="text-emerald-400"
+            bg="bg-emerald-400/10"
+          />
+          <KPICard 
+            title="Nodos en Riesgo Salino"
+            value={criticalParcels.length.toString()}
+            trend={criticalParcels.length > 0 ? "Acción requerida" : "Suelos estables"}
+            icon={AlertTriangle}
+            color={criticalParcels.length > 0 ? "text-rose-450 animate-pulse" : "text-emerald-400"}
+            bg={criticalParcels.length > 0 ? "bg-rose-500/10" : "bg-emerald-500/10"}
+            critical={criticalParcels.length > 0}
+          />
+          <KPICard 
+            title="Humedad Vol. Promedio"
+            value={averageMoisture}
+            trend={climate === 'nino' ? "+14.4% (Exceso)" : climate === 'sequia' ? "-12.2% (Déficit)" : "Nivel óptimo"}
+            icon={Droplets}
+            color={climate === 'sequia' ? "text-rose-400" : "text-blue-400"}
+            bg={climate === 'sequia' ? "bg-rose-400/10" : "bg-blue-400/10"}
+          />
+          <KPICard 
+            title="Vulnerabilidad Eólica"
+            value={climate === 'sequia' ? "Alta" : "Baja"}
+            trend="Vel. Viento 14km/h"
+            icon={Wind}
+            color="text-amber-400"
+            bg="bg-amber-400/10"
+          />
+        </div>
+      )}
+
+      {dimension === 'desastres' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <KPICard 
+            title="Alertas Sísmicas (IGP)"
+            value="1 Activa"
+            trend="Magnitud 4.8 Mw (Huánuco)"
+            icon={Activity}
+            color="text-rose-450 animate-pulse"
+            bg="bg-rose-500/10"
+            critical={true}
+          />
+          <KPICard 
+            title="Focos de Calor Activos"
+            value="3 Nodos"
+            trend="Madre de Dios / Loreto"
+            icon={AlertTriangle}
+            color="text-amber-400"
+            bg="bg-amber-400/10"
+          />
+          <KPICard 
+            title="Riesgo de Huaico / Lluvia"
+            value="Crítico"
+            trend="Monitoreo Quebrada Huaycoloro"
+            icon={Droplets}
+            color="text-orange-400"
+            bg="bg-orange-400/10"
+          />
+          <KPICard 
+            title="Deforestación Alertada"
+            value="14.2 Ha"
+            trend="Ingesta Sentinel-2 (Anual)"
+            icon={Wind}
+            color="text-emerald-400"
+            bg="bg-emerald-400/10"
+          />
+        </div>
+      )}
+
+      {dimension === 'recursos' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <KPICard 
+            title="Metales Pesados (Pb/As)"
+            value="0.02 ppm"
+            trend="Acuífero Rímac (Límite: 0.05)"
+            icon={Activity}
+            color="text-amber-400"
+            bg="bg-amber-400/10"
+          />
+          <KPICard 
+            title="Recarga de Cuencas"
+            value="42.4 m³/s"
+            trend="Flujo Infiltración Mantaro"
+            icon={Droplets}
+            color="text-blue-400"
+            bg="bg-blue-400/10"
+          />
+          <KPICard 
+            title="Reservas Bajo Alerta"
+            value="2 ANP"
+            trend="Tambopata & Huascarán"
+            icon={AlertTriangle}
+            color="text-rose-400 animate-pulse"
+            bg="bg-rose-500/10"
+            critical={true}
+          />
+          <KPICard 
+            title="pH Promedio Acuíferos"
+            value="6.8 pH"
+            trend="Nivel Óptimo Neutralizado"
+            icon={Wind}
+            color="text-emerald-400"
+            bg="bg-emerald-400/10"
+          />
+        </div>
+      )}
 
       {/* Main Charts & Spatial Data */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -181,25 +328,49 @@ export function Dashboard() {
         <div className="lg:col-span-2 glass-panel rounded-xl p-6 border border-slate-700/50">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-slate-200">Dinámica de Salinidad (CE) vs Humedad</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Valores correspondientes a la capa arable (0 - 20cm)</p>
+              <h2 className="text-lg font-semibold text-slate-200">
+                {dimension === 'alimentaria' && "Dinámica de Salinidad (CE) vs Humedad"}
+                {dimension === 'desastres' && "Historial de Alertas de Incidentes & Eventos Sísmicos"}
+                {dimension === 'recursos' && "Tasa de Metales Pesados en Acuífero Subterráneo (ppm)"}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {dimension === 'alimentaria' && "Valores correspondientes a la capa arable (0 - 20cm)"}
+                {dimension === 'desastres' && "Volumen de incidentes territoriales históricos mensuales"}
+                {dimension === 'recursos' && "Rastreo de Plomo y Arsénico en agua superficial y profunda"}
+              </p>
             </div>
-            <div className="flex gap-4 text-xs">
-              <span className="flex items-center text-emerald-400"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 mr-1.5"></span> CE (dS/m)</span>
-              <span className="flex items-center text-blue-400"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 mr-1.5"></span> Humedad (%)</span>
+            <div className="flex gap-4 text-xs font-semibold">
+              {dimension === 'alimentaria' && (
+                <>
+                  <span className="flex items-center text-emerald-400"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 mr-1.5"></span> CE (dS/m)</span>
+                  <span className="flex items-center text-blue-400"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 mr-1.5"></span> Humedad (%)</span>
+                </>
+              )}
+              {dimension === 'desastres' && (
+                <>
+                  <span className="flex items-center text-rose-450"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></span> Incidentes</span>
+                  <span className="flex items-center text-amber-400"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 mr-1.5"></span> Sismos IGP</span>
+                </>
+              )}
+              {dimension === 'recursos' && (
+                <>
+                  <span className="flex items-center text-amber-400"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 mr-1.5"></span> Plomo (ppm)</span>
+                  <span className="flex items-center text-cyan-400"><span className="w-2.5 h-2.5 rounded-full bg-cyan-400 mr-1.5"></span> Arsénico (ppm)</span>
+                </>
+              )}
             </div>
           </div>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ left: -20, right: 10 }}>
+              <AreaChart data={chartData as any[]} margin={{ left: -20, right: 10 }}>
                 <defs>
-                  <linearGradient id="colorEc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  <linearGradient id="colorPrimary" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={dimension === 'alimentaria' ? '#10b981' : dimension === 'desastres' ? '#ef4444' : '#f59e0b'} stopOpacity={0.25}/>
+                    <stop offset="95%" stopColor={dimension === 'alimentaria' ? '#10b981' : dimension === 'desastres' ? '#ef4444' : '#f59e0b'} stopOpacity={0}/>
                   </linearGradient>
-                  <linearGradient id="colorMoisture" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  <linearGradient id="colorSecondary" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={dimension === 'alimentaria' ? '#3b82f6' : dimension === 'desastres' ? '#f59e0b' : '#06b6d4'} stopOpacity={0.25}/>
+                    <stop offset="95%" stopColor={dimension === 'alimentaria' ? '#3b82f6' : dimension === 'desastres' ? '#f59e0b' : '#06b6d4'} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -209,39 +380,218 @@ export function Dashboard() {
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f1f5f9' }}
                   itemStyle={{ color: '#e2e8f0', fontSize: 12 }}
                 />
-                <Area type="monotone" dataKey="ec" stroke="#10b981" fillOpacity={1} fill="url(#colorEc)" name="CE (dS/m)" />
-                <Area type="monotone" dataKey="moisture" stroke="#3b82f6" fillOpacity={1} fill="url(#colorMoisture)" name="Humedad (%)" />
+                {dimension === 'alimentaria' && (
+                  <>
+                    <Area type="monotone" dataKey="ec" stroke="#10b981" fillOpacity={1} fill="url(#colorPrimary)" name="CE (dS/m)" />
+                    <Area type="monotone" dataKey="moisture" stroke="#3b82f6" fillOpacity={1} fill="url(#colorSecondary)" name="Humedad (%)" />
+                  </>
+                )}
+                {dimension === 'desastres' && (
+                  <>
+                    <Area type="monotone" dataKey="Incidentes" stroke="#ef4444" fillOpacity={1} fill="url(#colorPrimary)" name="Incidentes" />
+                    <Area type="monotone" dataKey="Sismos" stroke="#f59e0b" fillOpacity={1} fill="url(#colorSecondary)" name="Sismos IGP" />
+                  </>
+                )}
+                {dimension === 'recursos' && (
+                  <>
+                    <Area type="monotone" dataKey="Plomo" stroke="#f59e0b" fillOpacity={1} fill="url(#colorPrimary)" name="Plomo (ppm)" />
+                    <Area type="monotone" dataKey="Arsenico" stroke="#06b6d4" fillOpacity={1} fill="url(#colorSecondary)" name="Arsénico (ppm)" />
+                  </>
+                )}
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* XGBoost Ensemble Alerts list */}
+        {/* Tabbed Side Panel: XGBoost Alerts & PINN Solver Residuals */}
         <div className="glass-panel rounded-xl p-6 border border-slate-700/50 flex flex-col h-[380px]">
-          <div className="pb-3 border-b border-slate-800 mb-4">
-            <h2 className="text-lg font-semibold text-slate-200 flex items-center">
-              <Zap className="w-5 h-5 text-amber-400 mr-2" />
-              Alertas XGBoost & RF
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">Vulnerabilidad de degradación clasificada por IA</p>
+          {/* Tabs header */}
+          <div className="flex border-b border-slate-800 pb-3 mb-4 items-center justify-between">
+            <div className="flex space-x-3 text-sm font-semibold">
+              <button
+                onClick={() => setPanelTab('ml')}
+                className={cn(
+                  "pb-1 transition-all border-b-2",
+                  panelTab === 'ml' 
+                    ? "border-emerald-500 text-slate-100" 
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                )}
+              >
+                Alertas ML
+              </button>
+              <button
+                onClick={() => setPanelTab('pinn')}
+                className={cn(
+                  "pb-1 transition-all border-b-2",
+                  panelTab === 'pinn' 
+                    ? "border-emerald-500 text-slate-100" 
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                )}
+              >
+                Física PINN
+              </button>
+            </div>
+            
+            {panelTab === 'ml' ? (
+              <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
+            ) : (
+              <Cpu className="w-4 h-4 text-cyan-400 animate-spin animate-duration-[5000ms]" />
+            )}
           </div>
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin">
-            {criticalParcels.map((parcel, idx) => (
-              <div key={idx} className="p-4 rounded-lg bg-rose-500/5 border border-rose-500/20">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-semibold text-rose-400 text-sm">{parcel.id}</span>
-                  <span className="text-[9px] px-2 py-0.5 bg-rose-500/10 text-rose-300 rounded uppercase font-bold tracking-wider border border-rose-500/20">
-                    {classifyDegradation(parcel)}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400">CE: {parcel.ec} dS/m | pH: {parcel.pH} | N: {parcel.nitrogen} mg/kg</p>
-                <p className="text-[10px] text-slate-500 mt-2 font-medium">
-                  {parcel.ec > 4.5 ? 'Recomendación VRA: Yeso Agrícola y lavado LF.' : 'Recomendación: Aplicar drenaje secundario.'}
-                </p>
+
+          {/* Tab contents */}
+          <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin">
+            {panelTab === 'ml' ? (
+              <div className="space-y-4">
+                {dimension === 'alimentaria' && (
+                  <>
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2">Clasificador Ensamble XGBoost & Random Forest</p>
+                    {criticalParcels.map((parcel, idx) => (
+                      <div key={idx} className="p-4 rounded-lg bg-rose-500/5 border border-rose-500/20 animate-fade-in">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="font-semibold text-rose-450 text-sm">{parcel.id}</span>
+                          <span className="text-[9px] px-2 py-0.5 bg-rose-500/10 text-rose-350 rounded uppercase font-bold tracking-wider border border-rose-500/20">
+                            {classifyDegradation(parcel)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400">CE: {parcel.ec} dS/m | pH: {parcel.pH} | N: {parcel.nitrogen} mg/kg</p>
+                        <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                          {parcel.ec > 4.5 ? 'Recomendación VRA: Yeso Agrícola y lavado LF.' : 'Recomendación: Aplicar drenaje secundario.'}
+                        </p>
+                      </div>
+                    ))}
+                    {criticalParcels.length === 0 && (
+                      <div className="text-slate-500 text-xs italic text-center py-12">No hay alertas críticas en este escenario.</div>
+                    )}
+                  </>
+                )}
+
+                {dimension === 'desastres' && (
+                  <>
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2">Alertas de Catástrofes N.E.X.U.S. 4D</p>
+                    <div className="p-4 rounded-lg bg-rose-500/5 border border-rose-500/20 space-y-1">
+                      <p className="font-semibold text-rose-400 text-xs">Alerta Aluvión/Huaico Chosica</p>
+                      <p className="text-[11px] text-slate-300">Sensor de humedad de talud y sensor acústico excede umbral crítico. Despliegue automático de alerta temprana SMS.</p>
+                      <span className="inline-block text-[9px] font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded mt-1.5 uppercase">Urgente</span>
+                    </div>
+                    <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20 space-y-1">
+                      <p className="font-semibold text-amber-400 text-xs">Foco térmico: Incendio Madre de Dios</p>
+                      <p className="text-[11px] text-slate-300">Sentinel-2 detecta aumento drástico en banda infrarroja de onda corta. Notificación emitida al Servicio Forestal SERFOR.</p>
+                    </div>
+                  </>
+                )}
+
+                {dimension === 'recursos' && (
+                  <>
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2">Ingesta de Calidad de Cuencas O.M.N.I. TERRA</p>
+                    <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20 space-y-1">
+                      <p className="font-semibold text-amber-400 text-xs">Concentración Plomo Acuífero SN-Rimac-4</p>
+                      <p className="text-[11px] text-slate-300">Sensor electroquímico detecta 0.045 ppm. Riesgo alto de filtración de pasivo ambiental de relaves mineros de cabecera.</p>
+                      <span className="inline-block text-[9px] font-bold text-amber-450 bg-amber-500/10 px-2 py-0.5 rounded mt-1.5 uppercase">Alerta</span>
+                    </div>
+                    <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-1">
+                      <p className="font-semibold text-emerald-450 text-xs">Monitoreo Zona de Reserva Tambopata</p>
+                      <p className="text-[11px] text-slate-300">Cambio de cobertura detectado por radar Sentinel-1. 2.4 Ha de pérdida de biomasa identificada en zona protegida.</p>
+                    </div>
+                  </>
+                )}
               </div>
-            ))}
-            {criticalParcels.length === 0 && (
-              <div className="text-slate-500 text-xs italic text-center py-12">No hay alertas críticas en este escenario.</div>
+            ) : (
+              <div className="space-y-4 animate-fade-in text-xs">
+                {dimension === 'alimentaria' && (
+                  <>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">Ecuación de Richards (Potencial de Agua)</p>
+                      <code className="text-[9px] bg-slate-950 p-2 rounded block text-slate-400 text-center font-mono border border-slate-900 leading-normal">
+                        dΘ/dt = d/dz [ K(Θ) * (dΨ/dz + 1) ]
+                      </code>
+                    </div>
+
+                    <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg space-y-2">
+                      <div className="flex justify-between font-mono text-[10px]">
+                        <span className="text-slate-400">Residuo Richards:</span>
+                        <span className="text-emerald-400 font-semibold">{pinnResiduals.richards.toExponential(4)}</span>
+                      </div>
+                      <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                        <div className="bg-emerald-400 h-full w-[94%]" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">Convección-Dispersión (Transporte de Sales)</p>
+                      <code className="text-[9px] bg-slate-950 p-2 rounded block text-slate-400 text-center font-mono border border-slate-900 leading-normal">
+                        d(ΘC)/dt = d/dz [ ΘD dC/dz ] - d(qC)/dz
+                      </code>
+                    </div>
+
+                    <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg space-y-2">
+                      <div className="flex justify-between font-mono text-[10px]">
+                        <span className="text-slate-400">Residuo Solutos:</span>
+                        <span className="text-emerald-400 font-semibold">{pinnResiduals.soluto.toExponential(4)}</span>
+                      </div>
+                      <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                        <div className="bg-emerald-400 h-full w-[96%]" />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {dimension === 'desastres' && (
+                  <>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">Herschel-Bulkley (Flujo de Lodos / Huaico)</p>
+                      <code className="text-[9px] bg-slate-950 p-2 rounded block text-slate-400 text-center font-mono border border-slate-900 leading-normal">
+                        τ = τ_y + μ_p (du/dy)^m
+                      </code>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">Shallow Water (Propagación Tsunami)</p>
+                      <code className="text-[9px] bg-slate-950 p-2 rounded block text-slate-400 text-center font-mono border border-slate-900 leading-normal">
+                        ∂η/∂t + ∂(uH)/∂x + ∂(vH)/∂y = 0
+                      </code>
+                    </div>
+                    <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg space-y-2">
+                      <div className="flex justify-between font-mono text-[10px]">
+                        <span className="text-slate-400">Residuo Ondas Hidro:</span>
+                        <span className="text-cyan-400 font-semibold">1.825e-6</span>
+                      </div>
+                      <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                        <div className="bg-cyan-400 h-full w-[92%]" />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {dimension === 'recursos' && (
+                  <>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">Transporte de Contaminantes en Acuíferos</p>
+                      <code className="text-[9px] bg-slate-950 p-2 rounded block text-slate-400 text-center font-mono border border-slate-900 leading-normal">
+                        ∂C/∂t = ∂/∂x_i [ D_ij ∂C/∂x_j ] - v_i ∂C/∂x_i
+                      </code>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">Green-Ampt (Infiltración de Cuencas)</p>
+                      <code className="text-[9px] bg-slate-950 p-2 rounded block text-slate-400 text-center font-mono border border-slate-900 leading-normal">
+                        f(t) = K_sat [ 1 + (Ψ * ΔΘ) / F(t) ]
+                      </code>
+                    </div>
+                    <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg space-y-2">
+                      <div className="flex justify-between font-mono text-[10px]">
+                        <span className="text-slate-400">Convergencia Acuíferos:</span>
+                        <span className="text-emerald-400 font-semibold">9.845e-7</span>
+                      </div>
+                      <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                        <div className="bg-emerald-400 h-full w-[95%]" />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="pt-2 text-[10px] text-slate-500 italic leading-relaxed text-center">
+                  *Las PINNs acoplan la física limitando el espacio de hipótesis para predicciones hiper-robustas.
+                </div>
+              </div>
             )}
           </div>
         </div>

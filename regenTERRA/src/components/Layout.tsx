@@ -1,13 +1,15 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Leaf, Activity, Map, ClipboardList, Settings, Menu, Bell, Search } from 'lucide-react';
+import { Leaf, Activity, Compass, Map, ClipboardList, Settings, Menu, Bell, Search, Presentation } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Leaf },
   { name: 'Telemetría', href: '/telemetry', icon: Activity },
+  { name: 'SAT-Agro Pro', href: '/satagro', icon: Compass },
   { name: 'Mapa 3D', href: '/map', icon: Map },
   { name: 'Recetas VRA', href: '/prescriptions', icon: ClipboardList },
   { name: 'Configuración', href: '/settings', icon: Settings },
+  { name: 'Pitch Geotón', href: '/pitch', icon: Presentation },
 ];
 
 export function Layout() {

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sat-Agro: Infraestructura Digital de Seguridad Alimentaria (Perú)</title>
+    
+    <!-- Fuentes Premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Iconos vectoriales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet.js (GIS Mapping) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Chart.js (Visualización de datos) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Estilos de Sat-Agro -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER PRINCIPAL -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-satellite-dish pulse-animation"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>SAT-AGRO</h1>
+                    <span>INFRAESTRUCTURA DE SEGURIDAD ALIMENTARIA</span>
+                </div>
+            </div>
+            
+            <div class="location-badge">
+                <i class="fa-solid fa-location-dot"></i>
+                <span id="active-location">Valle Chancay-Lambayeque, Perú</span>
+            </div>
+            
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <span class="status-label">CEREBRO PINN ACTIVO</span>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT GRID -->
+        <main class="app-main">
+            <!-- PANEL IZQUIERDO: SECTORES Y ALERTAS PRESCRIPTIVAS -->
+            <section class="left-panel glass">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-seedling"></i> Monitoreo de Parcelas</h2>
+                    <span class="badge" id="parcel-count">4 Parcelas</span>
+                </div>
+                
+                <div class="parcel-selector-list" id="parcel-list">
+                    <!-- Se cargará dinámicamente vía JS -->
+                    <div class="loading-spinner">Cargando parcelas...</div>
+                </div>
+                
+                <!-- MÓDULO DE DIBUJO CATASTRAL CREADO EN FASE 2 -->
+                <div class="panel-header" style="margin-top: 0.5rem; border-top: 1px solid var(--border-glass); padding-top: 1rem;">
+                    <h2><i class="fa-solid fa-draw-polygon"></i> Digitalizar Parcela</h2>
+                </div>
+                <div class="digitizer-panel-body" style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button class="layer-btn" id="btn-draw-mode" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(0,229,255,0.08); border-color: rgba(0,229,255,0.3); color: var(--primary);">
+                        <i class="fa-solid fa-pencil"></i> Iniciar Dibujo en Mapa
+                    </button>
+                    <div id="digitize-form" style="display: none; flex-direction: column; gap: 0.5rem; background: rgba(255,255,255,0.01); border: 1px dashed var(--border-glass); padding: 0.65rem; border-radius: 8px;">
+                        <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: 600; line-height: 1.3;">Haz clic en el mapa para marcar los vértices de la parcela.</span>
+                        <input type="text" id="new-parcel-code" placeholder="Código (ej. P-CH-LMB-105)" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 6px; padding: 0.4rem; font-size: 0.75rem; color: #fff; outline: none; width: 100%;">
+                        <select id="new-parcel-crop" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 6px; padding: 0.4rem; font-size: 0.75rem; color: #fff; outline: none; width: 100%; cursor: pointer;">
+                            <option value="Arroz (Variedad Capirona)">Arroz</option>
+                            <option value="Caña de Azúcar">Caña de Azúcar</option>
+                            <option value="Espárrago Verde">Espárrago Verde</option>
+                            <option value="Quinua (Variedad INIA Salcedo)">Quinua</option>
+                        </select>
+                        <button class="layer-btn" id="btn-save-drawn" style="background: var(--secondary); color: #000; font-weight: 700; width: 100%; padding: 0.4rem; border: none; margin-top: 0.25rem;">
+                            Guardar Parcela
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-header" style="margin-top: 0.5rem; border-top: 1px solid var(--border-glass); padding-top: 1rem;">
+                    <h2><i class="fa-solid fa-kit-medical"></i> Prescripción de la IA</h2>
+                </div>
+                
+                <div class="prescription-alert-box" id="prescription-box">
+                    <!-- Se cargará dinámicamente -->
+                    <p class="empty-state">Selecciona una parcela en el mapa o lista para ver sus prescripciones físicas y químicas.</p>
+                </div>
+            </section>
+
+            <!-- SECCIÓN CENTRAL: MAPA GIS Y CONTROLES DE ESCENARIO -->
+            <section class="center-panel">
+                <!-- CONTENEDOR DEL MAPA GIS -->
+                <div class="map-container glass">
+                    <div class="map-overlay-title">
+                        <h3><i class="fa-solid fa-map"></i> Mapa Espacial de Salinidad Superficial (SI)</h3>
+                        <div class="layer-selector">
+                            <button class="layer-btn active" id="btn-layer-salinity">Salinidad (SI)</button>
+                            <button class="layer-btn" id="btn-layer-ndvi">Vigor (NDVI)</button>
+                            <button class="layer-btn" id="btn-layer-moisture">Humedad (VWC)</button>
+                        </div>
+                    </div>
+                    <div id="map"></div>
+                    <div class="map-legend">
+                        <div class="legend-title">Conductividad (dS/m)</div>
+                        <div class="legend-scale">
+                            <span style="background: #00e676;"></span>
+                            <span style="background: #eed202;"></span>
+                            <span style="background: #ff9100;"></span>
+                            <span style="background: #ff1744;"></span>
+                        </div>
+                        <div class="legend-labels">
+                            <span>&lt; 2.0 (Bajo)</span>
+                            <span>2.0 - 4.0</span>
+                            <span>4.0 - 8.0</span>
+                            <span>&gt; 8.0 (Crítico)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL INTERACTIVO DE SIMULACIÓN (ESCENARIOS FÍSICOS) -->
+                <div class="simulation-panel glass">
+                    <div class="sim-header">
+                        <h3><i class="fa-solid fa-sliders"></i> Simulador Físico de Escenarios de Estrés y Recuperación</h3>
+                        <span class="beta-badge">PINN Solver en Tiempo Real</span>
+                    </div>
+                    <div class="sim-controls">
+                        <div class="control-group">
+                            <label><i class="fa-solid fa-cloud-sun-rain"></i> Escenario Climático</label>
+                            <select id="sim-climate" class="sim-select">
+                                <option value="normal">Normal (Estival Costero)</option>
+                                <option value="nino">Fenómeno El Niño (Precipitación + Calor)</option>
+                                <option value="sequia">Sequía Extrema (Evaporación Elevada)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fa-solid fa-droplet"></i> Riego Aplicado</label>
+                            <div class="slider-container">
+                                <input type="range" id="sim-irrigation-slider" min="0" max="150" value="30" class="sim-slider">
+                                <span class="slider-value" id="sim-irrigation-val">30 mm</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label><i class="fa-solid fa-hourglass-start"></i> Nivel Freático</label>
+                            <div class="slider-container">
+                                <input type="range" id="sim-freatico-slider" min="30" max="300" value="180" class="sim-slider">
+                                <span class="slider-value" id="sim-freatico-val">180 cm</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label><i class="fa-solid fa-flask"></i> Aplicar Corrector</label>
+                            <select id="sim-amendment" class="sim-select">
+                                <option value="none">Ninguno</option>
+                                <option value="yeso">Yeso Agrícola (CaSO₄·2H₂O)</option>
+                                <option value="organico">Materia Orgánica / Lavado Profundo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PANEL DERECHO: GRÁFICOS Y ANÁLISIS DE TIEMPO-PROFUNDIDAD (4D) -->
+            <section class="right-panel glass">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-chart-line"></i> Análisis de Suelo Subsuperficial (20/40/60 cm)</h2>
+                </div>
+                
+                <div class="chart-tab-group">
+                    <button class="chart-tab active" id="tab-chart-moisture">Humedad</button>
+                    <button class="chart-tab" id="tab-chart-salinity">Salinidad</button>
+                    <button class="chart-tab" id="tab-chart-satellites">Satélite S2</button>
+                    <button class="chart-tab" id="tab-chart-pinn">Pérdida PINN</button>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="soil-time-chart"></canvas>
+                </div>
+
+                <div class="pinn-metrics-panel">
+                    <div class="metric-title"><i class="fa-solid fa-brain"></i> Diagnóstico de Convergencia PINN</div>
+                    <div class="pinn-grid">
+                        <div class="pinn-metric-card">
+                            <span class="label">Residuo Richards</span>
+                            <span class="value cyan-text" id="val-residue-richards">1.42e-6</span>
+                        </div>
+                        <div class="pinn-metric-card">
+                            <span class="label">Residuo Soluto</span>
+                            <span class="value green-text" id="val-residue-solutes">8.95e-7</span>
+                        </div>
+                        <div class="pinn-metric-card">
+                            <span class="label">Pérdida de Física (Lf)</span>
+                            <span class="value yellow-text" id="val-physics-loss">2.31e-6</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-header" style="margin-top: 1rem;">
+                    <h2><i class="fa-solid fa-clock-rotate-left"></i> Tendencia de Degradación a Largo Plazo (LSTM)</h2>
+                </div>
+                <div class="lstm-projection-card">
+                    <div class="projection-chart-container">
+                        <canvas id="lstm-chart"></canvas>
+                    </div>
+                    <div class="projection-message" id="projection-alert">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Alerta: En la tendencia actual, la salinización superficial aumentará un 28% en los próximos 12 meses.</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER: INFO DE LA GEOTÓN Y EQUIPO -->
+        <footer class="app-footer">
+            <p><strong>Sat-Agro</strong> - Solución desarrollada para la <strong>GeoTón Perú 2026</strong>. Proyecto de Escalabilidad Global y Soberanía Alimentaria.</p>
+            <div class="team-credits">
+                <i class="fa-solid fa-users-gear"></i> Escuadrón Alpha + 75 Especialistas
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts de Sat-Agro -->
+    <script src="dashboard.js"></script>
+</body>
+</html>

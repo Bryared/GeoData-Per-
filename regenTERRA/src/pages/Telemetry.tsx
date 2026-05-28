@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Activity, Wifi, Battery, Play, Pause, RefreshCw, Globe, Database, Cpu } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { generateMockSensors, type TelemetryData } from '../utils/engine';
+import { type TelemetryData } from '../utils/engine';
+import { soilAPI } from '../utils/api';
 
 export function Telemetry() {
   const [sensors, setSensors] = useState<TelemetryData[]>([]);
@@ -13,64 +14,90 @@ export function Telemetry() {
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const data = generateMockSensors();
-    setSensors(data);
-    setSelectedSensor(data[0]);
-    
-    // Initial logs
-    setLoraLogs([
-      `[${new Date().toLocaleTimeString()}] [INFO] Edafo-OS LoRaWAN Gateway initialized on 915.2 MHz.`,
-      `[${new Date().toLocaleTimeString()}] [INFO] SF7 (Spreading Factor) active. Redundancy active.`,
-      `[${new Date().toLocaleTimeString()}] [INFO] Connection established with GEO Perú PCM endpoints.`,
-      `[${new Date().toLocaleTimeString()}] [DATA] Loaded 12 AirMind soil telemetry nodes.`
-    ]);
+    const initTelemetry = async () => {
+      const connected = await soilAPI.checkConnection();
+      const data = await soilAPI.getTelemetryData();
+      setSensors(data);
+      if (data.length > 0) setSelectedSensor(data[0]);
+      
+      setLoraLogs([
+        `[${new Date().toLocaleTimeString()}] [INFO] Edafo-OS LoRaWAN Gateway initialized on 915.2 MHz.`,
+        `[${new Date().toLocaleTimeString()}] [INFO] SF7 (Spreading Factor) active. Redundancy active.`,
+        `[${new Date().toLocaleTimeString()}] [INFO] ${connected ? 'CEREBRO PINN CONECTADO - Servidor Python en puerto 8000 activo' : 'MODO AUTÓNOMO LOCAL ACTIVO (Servidor inactivo)'}`,
+        `[${new Date().toLocaleTimeString()}] [DATA] Loaded ${data.length} AirMind soil telemetry nodes.`
+      ]);
+    };
+    initTelemetry();
   }, []);
 
-  // Simulate real-time LoRa packets coming in
+  // Simulate real-time LoRa packets coming in or poll server
   useEffect(() => {
     if (!isLive) return;
 
-    const interval = setInterval(() => {
-      setSensors(prev => {
-        const updated = prev.map(s => {
-          if (Math.random() > 0.6) {
-            const randomVal = parseFloat((Math.random() * 0.4 - 0.2).toFixed(1));
-            const newEC = parseFloat(Math.max(0.5, Math.min(16.0, s.ec + randomVal)).toFixed(1));
-            const newMoisture = parseFloat(Math.max(4.0, Math.min(45.0, s.soilMoisture + parseFloat((Math.random() * 2 - 1).toFixed(1)))).toFixed(1));
-            
-            // Generate telemetry log entry
-            const rssiDelta = Math.floor(Math.random() * 5 - 2);
-            const newRssi = Math.min(-60, Math.max(-110, s.rssi + rssiDelta));
+    const interval = setInterval(async () => {
+      const connected = await soilAPI.checkConnection();
+      
+      if (connected) {
+        try {
+          const serverData = await soilAPI.getTelemetryData();
+          setSensors(prev => {
+            serverData.forEach(node => {
+              const old = prev.find(o => o.id === node.id);
+              if (old && (old.ec !== node.ec || old.soilMoisture !== node.soilMoisture)) {
+                setLoraLogs(logs => [
+                  ...logs,
+                  `[${new Date().toLocaleTimeString()}] [PYTHON SERVER] Live Ingest RX DevAddr[${node.id}] CE[${node.ec}dS/m] Hum[${node.soilMoisture}%] pH[${node.pH}]`
+                ].slice(-100));
+              }
+            });
 
-            setLoraLogs(logs => [
-              ...logs,
-              `[${new Date().toLocaleTimeString()}] [LoRaWAN] RX Packet DevAddr[${s.id}] RSSI[${newRssi}dBm] CE[${newEC}dS/m] Hum[${newMoisture}%] pH[${s.pH}]`
-            ].slice(-100)); // limit logs size
-
-            // Update sub-surface layers
-            const d20 = { ...s.depths.depth20cm, ec: parseFloat(Math.max(0.5, newEC * 0.9).toFixed(1)), moisture: parseFloat(Math.max(5.0, newMoisture * 0.85).toFixed(1)) };
-            const d40 = { ...s.depths.depth40cm, ec: parseFloat(Math.max(0.5, newEC * 1.05).toFixed(1)), moisture: parseFloat(Math.max(5.0, newMoisture * 1.0).toFixed(1)) };
-            const d60 = { ...s.depths.depth60cm, ec: parseFloat(Math.max(0.5, newEC * 1.2).toFixed(1)), moisture: parseFloat(Math.max(5.0, newMoisture * 1.15).toFixed(1)) };
-
-            return { 
-              ...s, 
-              ec: newEC, 
-              soilMoisture: newMoisture, 
-              rssi: newRssi,
-              depths: { depth20cm: d20, depth40cm: d40, depth60cm: d60 }
-            };
-          }
-          return s;
-        });
-
-        // Keep selected sensor in sync
-        if (selectedSensor) {
-          const match = updated.find(x => x.id === selectedSensor.id);
-          if (match) setSelectedSensor(match);
+            if (selectedSensor) {
+              const match = serverData.find(x => x.id === selectedSensor.id);
+              if (match) setSelectedSensor(match);
+            }
+            return serverData;
+          });
+        } catch (err) {
+          console.warn('Error polling live server telemetry:', err);
         }
+      } else {
+        setSensors(prev => {
+          const updated = prev.map(s => {
+            if (Math.random() > 0.6) {
+              const randomVal = parseFloat((Math.random() * 0.4 - 0.2).toFixed(1));
+              const newEC = parseFloat(Math.max(0.5, Math.min(16.0, s.ec + randomVal)).toFixed(1));
+              const newMoisture = parseFloat(Math.max(4.0, Math.min(45.0, s.soilMoisture + parseFloat((Math.random() * 2 - 1).toFixed(1)))).toFixed(1));
+              
+              const rssiDelta = Math.floor(Math.random() * 5 - 2);
+              const newRssi = Math.min(-60, Math.max(-110, s.rssi + rssiDelta));
 
-        return updated;
-      });
+              setLoraLogs(logs => [
+                ...logs,
+                `[${new Date().toLocaleTimeString()}] [LoRaWAN] RX Packet DevAddr[${s.id}] RSSI[${newRssi}dBm] CE[${newEC}dS/m] Hum[${newMoisture}%] pH[${s.pH}]`
+              ].slice(-100));
+
+              const d20 = { ...s.depths.depth20cm, ec: parseFloat(Math.max(0.5, newEC * 0.9).toFixed(1)), moisture: parseFloat(Math.max(5.0, newMoisture * 0.85).toFixed(1)) };
+              const d40 = { ...s.depths.depth40cm, ec: parseFloat(Math.max(0.5, newEC * 1.05).toFixed(1)), moisture: parseFloat(Math.max(5.0, newMoisture * 1.0).toFixed(1)) };
+              const d60 = { ...s.depths.depth60cm, ec: parseFloat(Math.max(0.5, newEC * 1.2).toFixed(1)), moisture: parseFloat(Math.max(5.0, newMoisture * 1.15).toFixed(1)) };
+
+              return { 
+                ...s, 
+                ec: newEC, 
+                soilMoisture: newMoisture, 
+                rssi: newRssi,
+                depths: { depth20cm: d20, depth40cm: d40, depth60cm: d60 }
+              };
+            }
+            return s;
+          });
+
+          if (selectedSensor) {
+            const match = updated.find(x => x.id === selectedSensor.id);
+            if (match) setSelectedSensor(match);
+          }
+          return updated;
+        });
+      }
     }, 3000);
 
     return () => clearInterval(interval);
