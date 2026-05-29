@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Truck, AlertTriangle, Flame, Activity, Sun, CloudRain, Thermometer, Compass, RotateCcw, MapPin, Sparkles, ShieldAlert, Droplet } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useDimension } from '../../context/DimensionContext';
+import { logisticsAPI } from '../../utils/api';
 
 function InfoTooltip({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
@@ -34,6 +35,11 @@ export function MandoRiesgos() {
   const [recalculatingLogistics, setRecalculatingLogistics] = useState(false);
   const [activePoint, setActivePoint] = useState<string | null>(null);
 
+  // Golang integration states
+  const [goRouterConnected, setGoRouterConnected] = useState(false);
+  const [solverTimeMs, setSolverTimeMs] = useState<number>(12);
+  const [reroutedPaths, setReroutedPaths] = useState<number>(3);
+
   // Load and sync landslide simulation state from local storage
   const loadLandslideState = () => {
     const savedLandslide = localStorage.getItem('landslide_simulated') === 'true';
@@ -58,20 +64,47 @@ export function MandoRiesgos() {
     };
   }, []);
 
+  // Periodic Go connection check
+  useEffect(() => {
+    const checkGo = async () => {
+      const connected = await logisticsAPI.checkConnection();
+      setGoRouterConnected(connected);
+    };
+    checkGo();
+    const checkInterval = setInterval(checkGo, 5000);
+    return () => clearInterval(checkInterval);
+  }, []);
+
   // Handle landslide simulation trigger and local storage sync
-  const triggerLandslideSimulation = () => {
+  const triggerLandslideSimulation = async () => {
     if (landslideSimulated) {
       setLandslideSimulated(false);
       localStorage.setItem('landslide_simulated', 'false');
       window.dispatchEvent(new Event('storage'));
+      setSolverTimeMs(12);
+      setReroutedPaths(3);
     } else {
       setRecalculatingLogistics(true);
-      setTimeout(() => {
+      try {
+        const result = await logisticsAPI.triggerReroute({
+          event_id: "HUAICO_CASMA_KM_385",
+          event_type: "HUAICO",
+          severity: 4,
+          latitude: -9.47,
+          longitude: -78.31
+        });
+        setSolverTimeMs(result.solver_time_ms || 12);
+        setReroutedPaths(result.rerouted_paths || 3);
+      } catch (err) {
+        console.warn("Falla en la llamada de ruteo de Golang, usando fallback simulado:", err);
+        setSolverTimeMs(12);
+        setReroutedPaths(3);
+      } finally {
         setRecalculatingLogistics(false);
         setLandslideSimulated(true);
         localStorage.setItem('landslide_simulated', 'true');
         window.dispatchEvent(new Event('storage'));
-      }, 1200);
+      }
     }
   };
 
@@ -595,7 +628,9 @@ export function MandoRiesgos() {
               <div className="space-y-2 text-[11px] text-slate-400 leading-relaxed">
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
                   <span>Motor Logístico:</span>
-                  <span className="font-bold text-slate-200">Golang (nexus_router)</span>
+                  <span className={cn("font-bold", goRouterConnected ? "text-emerald-405" : "text-slate-200")}>
+                    {goRouterConnected ? "Golang (CONECTADO EN VIVO)" : "Golang (SIMULADO LOCAL)"}
+                  </span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
                   <span>Red Georreferenciada:</span>
@@ -603,12 +638,14 @@ export function MandoRiesgos() {
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
                   <span>Tiempo de Cómputo:</span>
-                  <span className="font-mono font-bold text-cyan-400">&lt; 15 milisegundos</span>
+                  <span className="font-mono font-bold text-cyan-400">
+                    {solverTimeMs} milisegundos
+                  </span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
                   <span>Bypass Logístico:</span>
                   <span className={cn("font-bold", landslideSimulated ? "text-cyan-400 animate-pulse" : "text-slate-500")}>
-                    {landslideSimulated ? "ACTIVO (Canta/Huaraz)" : "Standby"}
+                    {landslideSimulated ? `ACTIVO (${reroutedPaths} flotas desviadas)` : "Standby"}
                   </span>
                 </div>
               </div>

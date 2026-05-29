@@ -63,6 +63,9 @@ class SoilAPIService {
         const res = await fetch(`${API_BASE_URL}/api/data`);
         const json = await res.json();
         
+        const dbConnected = json.metadata?.database_connected || false;
+        console.log(`%c[GeoTERRA API] Conectado al backend local. Modo DB: ${dbConnected ? 'SUPABASE EN VIVO' : 'SIMULADOR LOCAL (JSON)'}`, 'color: #10b981; font-weight: bold;');
+
         // Map Python backend schema back to frontend React TelemetryData format
         const parcelas = json.parcelas || [];
         const series = json.series_temporales || {};
@@ -117,7 +120,10 @@ class SoilAPIService {
     if (connected) {
       try {
         const res = await fetch(`${API_BASE_URL}/api/prescriptions`);
-        return await res.json();
+        const json = await res.json();
+        const dbConnected = json.valle?.includes('Supabase') || false;
+        console.log(`%c[GeoTERRA Prescripciones] Ingesta desde: ${dbConnected ? 'Supabase DB' : 'Archivo Local JSON'}`, 'color: #3b82f6; font-weight: bold;');
+        return json;
       } catch (err) {
         console.warn('API error fetching prescriptions:', err);
       }
@@ -256,3 +262,79 @@ class SoilAPIService {
 }
 
 export const soilAPI = new SoilAPIService();
+
+const GO_API_BASE_URL = 'http://localhost:9000';
+
+class LogisticsAPIService {
+  private isConnected: boolean = false;
+  private checkPromise: Promise<boolean> | null = null;
+
+  async checkConnection(): Promise<boolean> {
+    if (this.checkPromise) return this.checkPromise;
+
+    this.checkPromise = (async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1000); // 1s timeout
+        
+        const response = await fetch(`${GO_API_BASE_URL}/api/v1/nexus/status`, {
+          method: 'GET',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        this.isConnected = response.ok;
+        return response.ok;
+      } catch (e) {
+        this.isConnected = false;
+        return false;
+      } finally {
+        this.checkPromise = null;
+      }
+    })();
+
+    return this.checkPromise;
+  }
+
+  isServerConnected(): boolean {
+    return this.isConnected;
+  }
+
+  async triggerReroute(payload: {
+    event_id: string;
+    event_type: string;
+    severity: number;
+    latitude: number;
+    longitude: number;
+  }): Promise<any> {
+    const connected = await this.checkConnection();
+    if (connected) {
+      try {
+        const response = await fetch(`${GO_API_BASE_URL}/api/v1/nexus/reroute`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        const json = await response.json();
+        console.log('%c[GeoTERRA Routing] Conexión activa con Golang nexus_router.', 'color: #06b6d4; font-weight: bold;');
+        console.log(`%c[Golang Solver] Dijkstra tiempo de resolución: ${json.solver_time_ms} ms. Rutas recalculadas: ${json.rerouted_paths}`, 'color: #06b6d4;');
+        return json;
+      } catch (err) {
+        console.warn('API error communicating with Golang router, falling back to local simulation:', err);
+      }
+    }
+    
+    // Fallback simulation
+    return {
+      status: "SUCCESS",
+      optimal_route: " Trujillo ──► Callejón de Huaylas (Huaraz) ──► Canta ──► Lima Hub",
+      solver_time_ms: 12,
+      rerouted_paths: 3,
+      message: "Huaico en Casma simulado. Desvío por sierra calculado mediante simulación en cliente."
+    };
+  }
+}
+
+export const logisticsAPI = new LogisticsAPIService();
