@@ -8,6 +8,11 @@
   --color-terra-dark: #0f172a;
   --color-terra-dark-lighter: #1e293b;
   --color-terra-bg: #0b0f19;
+  --color-emerald-450: #10b981;
+  --color-rose-455: #f43f5e;
+  --color-cyan-455: #06b6d4;
+  --color-slate-450: #94a3b8;
+  --color-slate-455: #cbd5e1;
 }
 
 @layer base {

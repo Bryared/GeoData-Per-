@@ -41,6 +41,8 @@ export function MandoRiesgos() {
   };
 
   useEffect(() => {
+    // Set default active dimension to desastres on mount
+    setDimension('desastres');
     loadLandslideState();
     window.addEventListener('storage', loadLandslideState);
     
@@ -708,28 +710,24 @@ export function MandoRiesgos() {
                 style={{ mixBlendMode: 'lighten', pointerEvents: 'none' }} 
               />
               
-              <path d="M 0,100 L 600,100 M 0,200 L 600,200 M 0,300 L 600,300 M 0,400 L 600,400 M 100,0 L 100,500 M 200,0 L 200,500 M 300,0 L 300,500 M 400,0 L 400,500" stroke="#334155" strokeWidth="0.5" strokeDasharray="3,8" opacity="0.2" />
+              <path d="M 0,100 L 600,100 M 0,200 L 600,200 M 0,300 L 600,300 M 0,400 L 600,400 M 100,0 L 100,500 M 200,0 L 200,500 M 300,0 L 300,500 M 400,0 L 400,500" stroke="#334155" strokeWidth="0.5" strokeDasharray="3,8" opacity="0.15" />
 
-              {/* Draw Neighboring Countries Outlines (Faint gray, highly realistic GIS contours) */}
-              {/* 1. Ecuador */}
-              <path d="M 95,75 C 75,65 60,55 50,40 C 80,45 110,50 145,55" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
-              <text x="35" y="60" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">ECUADOR</text>
+              {/* Regional Division Lines (GIS Department Borders) */}
+              {/* Piura / Lambayeque Border */}
+              <path d="M 50,90 C 80,95 110,100 150,100" fill="none" stroke="#475569" strokeWidth="1" strokeDasharray="2,4" opacity="0.5" />
+              <text x="60" y="85" fill="#475569" fontSize="7" fontWeight="bold" opacity="0.6" className="font-mono">LÍM. PIURA - LAMBAYEQUE</text>
 
-              {/* 2. Colombia */}
-              <path d="M 235,55 C 240,30 260,20 325,35" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
-              <text x="300" y="25" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">COLOMBIA</text>
+              {/* Lambayeque / La Libertad Border */}
+              <path d="M 90,150 C 130,155 170,160 220,160" fill="none" stroke="#475569" strokeWidth="1" strokeDasharray="2,4" opacity="0.5" />
+              <text x="100" y="145" fill="#475569" fontSize="7" fontWeight="bold" opacity="0.6" className="font-mono">LÍM. LAMBAYEQUE - LA LIBERTAD</text>
 
-              {/* 3. Brasil */}
-              <path d="M 325,35 C 420,40 500,60 580,100 C 585,200 580,280 475,320" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
-              <text x="500" y="200" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">BRASIL</text>
+              {/* La Libertad / Ancash Border */}
+              <path d="M 180,210 C 220,212 260,215 310,215" fill="none" stroke="#475569" strokeWidth="1" strokeDasharray="2,4" opacity="0.5" />
+              <text x="190" y="205" fill="#475569" fontSize="7" fontWeight="bold" opacity="0.6" className="font-mono">LÍM. LA LIBERTAD - ANCASH</text>
 
-              {/* 4. Bolivia */}
-              <path d="M 475,320 C 530,350 560,400 520,470 C 480,460 460,440 445,420" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
-              <text x="490" y="440" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">BOLIVIA</text>
-
-              {/* 5. Chile */}
-              <path d="M 425,465 C 440,490 445,500 450,500" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
-              <text x="460" y="490" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">CHILE</text>
+              {/* Ancash / Lima Border */}
+              <path d="M 220,275 C 280,280 320,285 370,285" fill="none" stroke="#475569" strokeWidth="1" strokeDasharray="2,4" opacity="0.5" />
+              <text x="240" y="270" fill="#475569" fontSize="7" fontWeight="bold" opacity="0.6" className="font-mono">LÍM. ANCASH - LIMA</text>
 
               {/* Pacific Ocean Label & Anomaly (Rendered on Desastres/Recursos Modes) */}
               {dimension !== 'alimentaria' && (
@@ -745,9 +743,9 @@ export function MandoRiesgos() {
                     El Niño (+2.8°C)
                   </text>
                   
-                  {/* Warm Ocean Current (El Niño) */}
+                  {/* Warm Ocean Current (El Niño) parallel to zoomed coastline */}
                   <path 
-                    d="M 15,30 C 50,110 70,220 120,330 T 200,470" 
+                    d="M 20,30 C 10,120 40,240 100,350 T 200,480" 
                     fill="none" 
                     stroke="url(#el-nino-grad)" 
                     strokeWidth="5" 
@@ -757,41 +755,41 @@ export function MandoRiesgos() {
                 </>
               )}
 
-              {/* Amazon forest background region (Selva) */}
+              {/* Amazon forest background region (Selva) - Zoomed coordinate placement */}
               <path 
-                d="M 280,50 Q 370,80 450,120 T 435,245 T 485,340 T 410,420 Z" 
+                d="M 420,50 Q 480,120 540,200 T 560,350 T 520,480 Z" 
                 fill="#065f46" 
-                fillOpacity="0.06" 
+                fillOpacity="0.05" 
                 stroke="#047857"
-                strokeWidth="1.5"
+                strokeWidth="1.2"
                 strokeDasharray="4,8"
-                opacity="0.5"
+                opacity="0.4"
               />
-              <text x="380" y="160" fill="#047857" fontSize="10" fontWeight="bold" opacity="0.3" className="font-mono tracking-widest">
+              <text x="470" y="180" fill="#047857" fontSize="10" fontWeight="bold" opacity="0.25" className="font-mono tracking-widest" transform="rotate(75, 470, 180)">
                 SELVA AMAZÓNICA
               </text>
 
-              {/* Andes Mountain Ridge Line (Sierra) */}
+              {/* Andes Mountain Ridge Line (Sierra) - Zoomed coordinate placement */}
               <path 
-                d="M 150,65 Q 180,130 220,210 T 280,310 T 350,420 T 400,450" 
+                d="M 250,50 Q 300,150 350,250 T 420,380 T 460,480" 
                 fill="none" 
                 stroke="#b45309" 
                 strokeWidth="2" 
                 strokeDasharray="2,4" 
                 opacity="0.35" 
               />
-              <text x="260" y="270" fill="#b45309" fontSize="8" fontWeight="bold" opacity="0.35" className="font-mono tracking-widest" transform="rotate(30, 260, 270)">
+              <text x="320" y="220" fill="#b45309" fontSize="8" fontWeight="bold" opacity="0.35" className="font-mono tracking-widest" transform="rotate(65, 320, 220)">
                 CORDILLERA ANDINA
               </text>
 
-              {/* Peru boundary outline path (Highly detailed schematic outline of borders) */}
+              {/* Zoomed Regional Bounding Polygon (Peru Central-North Logistics Corridor) */}
               <path 
-                d="M 95,75 C 75,85 70,95 75,95 C 90,120 100,130 105,140 C 125,170 135,180 145,195 C 165,215 175,225 185,235 C 225,295 245,315 255,335 C 275,365 285,375 295,385 C 335,415 355,425 365,435 C 395,455 415,460 425,465 C 435,445 440,435 445,420 C 465,370 470,340 475,320 C 455,280 435,260 425,245 C 435,180 440,150 445,125 C 385,80 355,50 325,35 C 285,45 255,50 235,55 C 195,55 165,55 145,55 Z" 
-                fill="#1e293b" 
-                fillOpacity="0.15" 
-                stroke="#475569" 
-                strokeWidth="2.5" 
-                opacity="0.9" 
+                d="M 30,30 L 480,30 L 520,470 L 150,470 Z" 
+                fill="none" 
+                stroke="#22d3ee" 
+                strokeWidth="1.5" 
+                strokeDasharray="4,6"
+                opacity="0.25" 
               />
 
               {/* RENDER LOGISTICS ROADMAP PATHS (Only visible in Seguridad Alimentaria dimension) */}
@@ -799,7 +797,7 @@ export function MandoRiesgos() {
                 <>
                   {/* 1. Normal Panamericana Highway vector path */}
                   <path 
-                    d="M 95,105 L 115,145 L 165,195 L 180,235 L 250,325" 
+                    d="M 80,70 L 140,130 L 200,190 L 230,230 L 380,380" 
                     fill="none" 
                     stroke={landslideSimulated ? "#f43f5e" : "#10b981"} 
                     strokeWidth="3.5" 
@@ -811,7 +809,7 @@ export function MandoRiesgos() {
 
                   {/* 2. pgRouting Bypass Route (Sierra bypass) */}
                   <path 
-                    d="M 165,195 L 200,220 L 235,290 L 250,325" 
+                    d="M 200,190 L 280,200 L 340,310 L 380,380" 
                     fill="none" 
                     stroke="#22d3ee" 
                     strokeWidth={landslideSimulated ? "3.5" : "1.5"} 
@@ -822,10 +820,10 @@ export function MandoRiesgos() {
                   />
 
                   {/* Route labels */}
-                  <text x="135" y="180" fill="#f43f5e" fontSize="9" fontWeight="bold" opacity={landslideSimulated ? 0.95 : 0.3} className="font-mono">
+                  <text x="120" y="240" fill="#f43f5e" fontSize="9" fontWeight="bold" opacity={landslideSimulated ? 0.95 : 0.3} className="font-mono">
                     {landslideSimulated ? "Panamericana (Bloqueada)" : "Panamericana Norte"}
                   </text>
-                  <text x="215" y="255" fill="#22d3ee" fontSize="8" fontWeight="bold" opacity={landslideSimulated ? 0.95 : 0.2} className="font-mono animate-pulse">
+                  <text x="290" y="250" fill="#22d3ee" fontSize="8" fontWeight="bold" opacity={landslideSimulated ? 0.95 : 0.2} className="font-mono animate-pulse">
                     Bypass pgRouting (Sierra)
                   </text>
                 </>
@@ -835,16 +833,16 @@ export function MandoRiesgos() {
               {dimension === 'recursos' && (
                 <>
                   {/* Poechos Reservoir Oval shape near Piura */}
-                  <ellipse cx="95" cy="95" rx="12" ry="7" fill="#06b6d4" fillOpacity="0.4" stroke="#22d3ee" strokeWidth="1.5" />
-                  <text x="70" y="82" fill="#22d3ee" fontSize="8" fontWeight="bold" className="font-mono">Poechos</text>
+                  <ellipse cx="80" cy="70" rx="12" ry="7" fill="#06b6d4" fillOpacity="0.4" stroke="#22d3ee" strokeWidth="1.5" />
+                  <text x="55" y="55" fill="#22d3ee" fontSize="8" fontWeight="bold" className="font-mono">Poechos</text>
 
                   {/* Lake Titicaca Oval shape near Puno */}
-                  <ellipse cx="405" cy="405" rx="14" ry="9" fill="#06b6d4" fillOpacity="0.4" stroke="#22d3ee" strokeWidth="1.5" />
-                  <text x="410" y="392" fill="#22d3ee" fontSize="8" fontWeight="bold" className="font-mono">Titicaca</text>
+                  <ellipse cx="460" cy="440" rx="14" ry="9" fill="#06b6d4" fillOpacity="0.4" stroke="#22d3ee" strokeWidth="1.5" />
+                  <text x="465" y="425" fill="#22d3ee" fontSize="8" fontWeight="bold" className="font-mono">Titicaca</text>
 
                   {/* Amazon River winding path near Iquitos */}
-                  <path d="M 280,75 Q 310,95 340,110 T 430,130" fill="none" stroke="#0284c7" strokeWidth="4" opacity="0.6" />
-                  <text x="320" y="90" fill="#0284c7" fontSize="8" fontWeight="bold" className="font-mono" transform="rotate(10, 320, 90)">Río Amazonas</text>
+                  <path d="M 380,60 Q 420,75 450,90 T 520,110" fill="none" stroke="#0284c7" strokeWidth="4" opacity="0.6" />
+                  <text x="420" y="80" fill="#0284c7" fontSize="8" fontWeight="bold" className="font-mono" transform="rotate(10, 420, 80)">Río Amazonas</text>
                 </>
               )}
 
