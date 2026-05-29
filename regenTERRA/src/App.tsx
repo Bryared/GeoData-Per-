@@ -6,6 +6,7 @@ import { Map3DKriging } from './modules/edafologia/Map3DKriging';
 import { RecetasVRA } from './modules/edafologia/RecetasVRA';
 import { MandoRiesgos } from './modules/riesgos/MandoRiesgos';
 import { VisorCatastral } from './modules/catastro/VisorCatastral';
+import { DataHub } from './modules/analitica/DataHub';
 import { Settings } from './pages/Settings';
 import { Pitch } from './pages/Pitch';
 import { DimensionProvider } from './context/DimensionContext';
@@ -21,6 +22,7 @@ function App() {
             <Route path="satagro" element={<VisorCatastral />} />
             <Route path="map" element={<Map3DKriging />} />
             <Route path="prescriptions" element={<RecetasVRA />} />
+            <Route path="analytics" element={<DataHub />} />
             <Route path="riesgos" element={<MandoRiesgos />} />
             <Route path="settings" element={<Settings />} />
             <Route path="pitch" element={<Pitch />} />

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Leaf, Activity, Compass, Map, ClipboardList, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet } from 'lucide-react';
+import { Leaf, Activity, Compass, Map, ClipboardList, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, BarChart3 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useDimension } from '../context/DimensionContext';
 import { useMemo } from 'react';
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Mapa 3D', href: '/map', icon: Map },
   { name: 'Mando de Riesgos', href: '/riesgos', icon: ShieldAlert },
   { name: 'Recetas VRA', href: '/prescriptions', icon: ClipboardList },
+  { name: 'Análisis Estadístico', href: '/analytics', icon: BarChart3 },
   { name: 'Configuración', href: '/settings', icon: Settings },
   { name: 'Pitch Geotón', href: '/pitch', icon: Presentation },
 ];
