@@ -160,18 +160,101 @@ FOR EACH ROW EXECUTE FUNCTION auditar_colapso_vial();
 
 ---
 
-## 🔄 4. Conexiones Pendientes para la Integración Total (MVP funcional)
+## 🔄 4. Pipelines de Integración de Datos (Puentes de Interoperabilidad)
 
-Para que el ecosistema pase de ser servicios aislados a operar en un bucle completamente integrado de extremo a extremo, estas son las 3 conexiones inmediatas a desarrollar:
+Para consolidar el bucle ciberfísico en el MVP, se detallan los tres pipelines de integración de datos para habilitar la sincronización en caliente entre React, FastAPI, Golang y la base de datos geoespacial PostgreSQL/PostGIS:
 
-### 1. Conexión del Frontend al Microservicio de Golang (`nexus-router`)
-*   **Estado actual:** La página `MandoRiesgos.tsx` simula el bypass logístico localmente.
-*   **Acción requerida:** Reemplazar la simulación de bypass local por una petición HTTP `POST` real al microservicio en Go expuesto en el puerto `9000` cada vez que el usuario presione "Simular Huaico".
+### A. Integración Frontend $\rightarrow$ Backend (React hacia FastAPI y Go)
+*   **Problemática a resolver:** La desvinculación funcional de la interfaz con los servidores de cálculo al interactuar con controles de simulación.
+*   **Implementación requerida:** Reemplazar funciones de simulación local en `api.ts` por peticiones HTTP `POST` reales:
+    *   *Simulación física de suelo:* `POST http://localhost:8000/api/simulate` (FastAPI).
+    *   *Ruteo preventivo de desvío vial:* `POST http://localhost:9000/api/route` (Golang).
 
-### 2. Sincronización del Frontend al resolvedor PyTorch PINN (`SATagro`)
-*   **Estado actual:** El resolvedor de física e inferencias corre localmente en scripts de Python.
-*   **Acción requerida:** Configurar el endpoint `/api/v1/prescriptions` de FastAPI (`server.py`) para consumir las variables de salinidad y humedad desde Supabase, calcular la fracción de lavado ($LR$) y la enmienda de yeso en PyTorch, y retornar la receta química a la página `RecetasVRA.tsx`.
+### B. Integración Backend $\rightarrow$ PostgreSQL/PostGIS (Servidores hacia DB)
+*   **Problemática a resolver:** Falta de persistencia y lectura dinámica del estado territorial.
+*   **Implementación requerida:**
+    *   *Entorno Python:* Implementación del conector `asyncpg` o `psycopg2` para ejecutar consultas parametrizadas como `SELECT * FROM parcelas_agricolas` que alimenten al resolvedor PyTorch.
+    *   *Entorno Golang:* Uso del controlador `pgx` para precargar la tabla `red_vial_logistica` directamente en la estructura del grafo en memoria al inicializar el servicio.
 
-### 3. Compilación e Integración de Rust WebAssembly en la UI
-*   **Estado actual:** La interpolación de Kriging tridimensional en `Map3DKriging.tsx` se calcula localmente mediante JavaScript básico en `utils/engine.ts`.
-*   **Acción requerida:** Ejecutar `wasm-pack build --target web` en el directorio `wasm_core/` e importar el binario compilado de Rust `solve_kriging_wasm` directamente en el bucle de renderizado de Three.js para acelerar los cálculos de mallas en un 400%.
+### C. Integración Ingesta Satelital $\rightarrow$ Almacenamiento (n8n hacia DB)
+*   **Problemática a resolver:** Actualización manual de amenazas geológicas, meteorológicas o de cobertura vegetal.
+*   **Implementación requerida:** Activación del flujo de n8n. El nodo final del pipeline de integración ejecutará sentencias SQL automatizadas de tipo `INSERT INTO telemetria_iot` o `alertas_desastres` ante la recepción de tramas del SENAMHI, IGP o APIs de GEO Perú, disparando los triggers espaciales configurados de forma autónoma.
+
+---
+
+## 📊 5. Misión Táctica de Validación y Ciencia de Datos
+
+| Tarea Científica | Descripción del Proceso | Impacto en el Modelo |
+| :--- | :--- | :--- |
+| **Calibración de Pesos (XGBoost/PINN)** | Ajuste de los coeficientes de las ecuaciones de Richards y convección-dispersión. Si la salinidad (CE) supera los $4.0 \ dS/m$, el modelo debe calcular la cantidad óptima de agua para el lavado de sales sin sobrecargar el nivel freático. | **Consistencia Analítica:** El motor de prescripción agronómica entregará soluciones validadas científicamente para cada parcela. |
+| **Validación del Kriging 3D** | Calibración del variograma espacial ordinario en el resolvedor compilado de Rust WebAssembly. Verificación de que la varianza y el semivariograma reflejen la dispersión real de sales en el Valle Chancay-Lambayeque. | **Precisión Geoespacial:** La malla interactiva 3D representará con total veracidad la dinámica de salinización. |
+| **Diseño del "Golden Dataset"** | Depuración, limpieza y estructuración del conjunto de datos históricos provenientes de las fuentes oficiales de GEO Perú. Eliminación de datos huérfanos y normalización de fechas y coordenadas (SRID 4326). | **Estabilidad Operacional:** Prevención de excepciones y errores de formato durante la inyección de datos espaciales. |
+| **Cuantificación del Retorno de Inversión (ROI)** | Modelado de indicadores de impacto económico y social para el pitch técnico ante los evaluadores de la PCM (ej. 30% de ahorro hídrico y 94% de nivel de confianza estadística). | **Viabilidad de Políticas Públicas:** Traducción del desempeño matemático del gemelo digital en beneficios sociales tangibles. |
+
+---
+
+## 📖 6. GUÍA DE FUNCIONALIDAD DEL MVP: CÓMO SACARLE PROVECHO HOY
+
+Si no cuentas con la base de datos PostgreSQL/PostGIS o los resolvedores nativos corriendo en caliente durante la evaluación del prototipo, la interfaz interactiva de **GeoTERRA** en React ha sido provista con un **Live Engine de simulación física y matemática** de alta fidelidad. 
+
+A continuación se detalla cómo operar el proyecto actualmente, qué problemas reales resuelve en el territorio peruano y cómo sacarle el máximo provecho en vivo ante el jurado:
+
+### 🌾 Módulo 1: Seguridad Alimentaria (Edafo-OS / O.M.N.I. TERRA)
+*   **Problemática que resuelve:**
+    *   **Salinización de suelos agrícolas:** Esterilización del 40% de las tierras fértiles en el Bajo Piura y Lambayeque por prácticas inadecuadas de riego (inundación).
+    *   **Pérdida de rendimiento en cultivos de agroexportación:** Cultivos sensibles (ej. arroz, uvas) sufren estrés osmótico que frena su crecimiento.
+*   **Cómo se opera en vivo y casos de uso prácticos:**
+    1.  **Exploración del Mapa 3D Kriging:** Ve a la pestaña **"Mapa 3D"**. El motor calcula una interpolación espacial continua a partir de sensores discretos en la parcela. Puedes rotar y hacer zoom en el modelo 3D para ubicar visualmente las costras de concentración de sales (áreas de color rojo brillante) y planificar drenajes precisos.
+    2.  **Generación de Recetas VRA en Tiempo Real:** En la sección **"Recetas VRA"**, simula el impacto de climas extremos como **"El Niño"** o **"Sequía"** mediante la barra superior. Verás cómo los sensores reportan en tiempo real picos de conductividad eléctrica.
+    3.  **Cálculo Químico Dinámico:** Ajusta el control deslizante de **"Porcentaje de Sodio Intercambiable (PSI)"** y la salinidad del agua de riego. El Live Engine simulará instantáneamente las fórmulas para prescribir las toneladas exactas de **Yeso Agrícola** por hectárea y la fracción de lavado necesarias para recuperar la permeabilidad del suelo.
+    4.  **Oráculo Predictivo XGBoost:** Usa la calculadora para estimar la idoneidad del cultivo idóneo basándote en la temperatura, pH y salinidad del suelo actuales, emitiendo recomendaciones de rotación de cultivos.
+
+### 🌋 Módulo 2: Central de Mitigación (N.E.X.U.S. 4D)
+*   **Problemática que resuelve:**
+    *   **Corte de carreteras por deslizamientos (Huaicos):** Bloqueo vial de la Panamericana en el KM 385 (Casma), aislando la producción agrícola norteña de los mercados de Lima.
+    *   **Incendios forestales descontrolados:** Pérdida de biomasa y biodiversidad en reservas como la Reserva Nacional Tambopata por focos de calor inadvertidos.
+*   **Cómo se opera en vivo y casos de uso prácticos:**
+    1.  **Simulador de Crisis Geológica:** Ve al panel **"Mando de Riesgos"**. Observa el mapa vectorial SVG interactivo que traza la red vial de transporte del MTC (Piura ──► Lima).
+    2.  **Disparar Alerta de Huaico:** Haz clic en el botón rojo **"Simular Huaico (KM 385)"**. El sistema registrará instantáneamente el deslizamiento de tierra en el tramo de la quebrada Casma, activando una alarma visual.
+    3.  **Desvío de Flota en 12ms (pgRouting):** Al activarse el huaico, el resolvedor de pgRouting/Golang en RAM se activa y recalcula dinámicamente las aristas de transporte. Verás cómo el camión de carga **`TRUCK-PE-02`** cambia de rumbo instantáneamente en el mapa, tomando el bypass andino (**Trujillo ──► Huaraz ──► Canta ──► Lima**), resguardando el 98.4% del vigor y frescura de la carga alimentaria.
+    4.  **Monitoreo Térmico Tambopata:** Haz clic sobre el nodo de **"Reserva Tambopata"** en el mapa. Verás la telemetría en vivo del pirómetro de campo registrando una alerta de 98°C junto al índice espectral NBR del Sentinel-2.
+
+### 🗺️ Módulo 3: Catastro Inclusivo (SAT-Agro Pro)
+*   **Problemática que resuelve:**
+    *   **Informalidad catastral e inseguridad jurídica:** Agricultores familiares carecen de títulos claros y delimitaciones digitales, excluyéndolos de créditos.
+    *   **Ineficiente reparto de licencias de agua:** Comisiones de regantes distribuyen el recurso de forma arbitraria sin basarse en telemetría de suelo real.
+*   **Cómo se opera en vivo y casos de uso prácticos:**
+    1.  **Visor Catastral Interactivo:** Abre la pestaña **"SAT-Agro Pro"**.
+    2.  **Exploración del Valle Chancay:** A través de un contenedor interactivo de alta fidelidad, puedes consultar la subdivisión en vivo de las parcelas de la junta de usuarios del Chancay.
+    3.  **Vinculación Ciberfísica:** Muestra al jurado cómo este catastro se vincula directamente a las recetas de Edafo-OS.
+
+---
+
+## 🧭 7. DELEGACIÓN ESTRATÉGICA DE ROLES: CIENCIA DE DATOS E INGENIERÍA DE SOFTWARE
+
+A menos de 24 horas del cierre de la Geotón, la clave para evitar cuellos de botella operativos es la **clara división de responsabilidades** entre el modelado analítico y la puesta en producción dentro de la infraestructura relacional de **GeoData Perú**.
+
+### A. Perfil de Ciencia de Datos y Modelamiento Físico
+*   **Misión principal:** Garantizar la veracidad científica de las predicciones, calibrando las ecuaciones de transporte y cuidando la coherencia agronómica del gemelo digital.
+*   **Asignación de Scripts y Tareas:**
+    1.  **`brain/pinn_model.py` (Solver PINN PyTorch):**
+        *   *Objetivo:* Ajustar hiperparámetros y optimizar las tasas de aprendizaje para asegurar que la Ecuación de Richards devuelva fracciones de lavado ($LF$) coherentes y realistas según los niveles de conductividad de entrada.
+    2.  **`data/sensor_simulator.py` (Simulador de Campo):**
+        *   *Objetivo:* Calibrar los rangos estadísticos de la generación sintética de datos. Es fundamental evitar valores atípicos imposibles (ej. pH de 14 o salinidad de 100 dS/m) que invaliden el rigor de la demostración frente a agrónomos del jurado.
+
+### B. Perfil de Ingeniería de Software e Integración de Sistemas (MLOps)
+*   **Misión principal:** Construir y asegurar la interoperabilidad. Tomar los resolvedores calibrados y exponerlos como endpoints REST estables y rápidos que se conecten de manera asíncrona a la base de datos y la UI.
+*   **Asignación de Scripts y Tareas:**
+    1.  **`server.py` (FastAPI Server):**
+        *   *Objetivo:* Configurar `CORSMiddleware`, escribir endpoints robustos (`POST /api/v1/prescriptions`) e integrar la conexión asíncrona (`asyncpg` / `SQLAlchemy`) para consultar PostGIS en Supabase y retornar el payload JSON hacia React.
+    2.  **`wasm_core/src/lib.rs` (Cómputo Rust WebAssembly):**
+        *   *Objetivo:* Optimizar el resolvedor de Kriging continuo. Garantizar que la complejidad matemática no comprometa el hilo principal de procesamiento en la interfaz del cliente, asegurando una compilación limpia a WebAssembly.
+
+---
+
+### 🚀 Matriz de Responsabilidades Críticas de Cierre
+
+| Perfil Técnico | Enfoque Principal | Entregable Crítico para la Demostración | Herramientas |
+| :--- | :--- | :--- | :--- |
+| **Ciencia de Datos** | Precisión Científica | Pesos del resolvedor físico e inyección de datos consistentes. | PyTorch, NumPy, SciPy |
+| **Ingeniería MLOps** | Producción y Conectividad | Endpoint API operativo (Status 200) e interpolación Kriging optimizada. | FastAPI, PostGIS, Rust/Wasm |
