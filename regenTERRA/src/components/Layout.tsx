@@ -1,8 +1,9 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Leaf, Activity, Compass, Map, ClipboardList, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, BarChart3 } from 'lucide-react';
+import { Leaf, Activity, Compass, Map, ClipboardList, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, BarChart3, Sun, Moon, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useDimension } from '../context/DimensionContext';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Leaf },
@@ -19,6 +20,75 @@ const navigation = [
 export function Layout() {
   const location = useLocation();
   const { dimension, setDimension } = useDimension();
+
+  // Perfil Lumínico (Theme state)
+  const [isLight, setIsLight] = useState(() => {
+    return localStorage.getItem('geoterra_theme') === 'light';
+  });
+
+  // Notifications state
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      category: 'SÍSMICO',
+      message: 'IGP reporta micro-aceleración de 0.05g en Falla de la Costa Central. N.E.X.U.S. 4D en modo preventivo.',
+      time: 'Hace 5m',
+      type: 'warning',
+      unread: true
+    },
+    {
+      id: 2,
+      category: 'HIDROLÓGICO',
+      message: 'Poechos registra ingreso de cota máxima de 103 msnm. Richards PDE recalculando flujo de descarga.',
+      time: 'Hace 15m',
+      type: 'info',
+      unread: true
+    },
+    {
+      id: 3,
+      category: 'AGRO-LOGÍSTICO',
+      message: 'Camión TRUCK-PE-02 ha cruzado desvío de Canta de forma óptima. Tiempo estimado intacto.',
+      time: 'Hace 28m',
+      type: 'success',
+      unread: true
+    },
+    {
+      id: 4,
+      category: 'INCENDIO',
+      message: 'Satélite Sentinel-2 alerta anomalía térmica menor en Tambopata (NDVI/NBR). Guardaparques alertados.',
+      time: 'Hace 1h',
+      type: 'danger',
+      unread: false
+    }
+  ]);
+
+  // Synchronize HTML class for Perfil Lumínico
+  useEffect(() => {
+    if (isLight) {
+      document.documentElement.classList.add('light');
+      localStorage.setItem('geoterra_theme', 'light');
+    } else {
+      document.documentElement.classList.remove('light');
+      localStorage.setItem('geoterra_theme', 'dark');
+    }
+  }, [isLight]);
+
+  const toggleTheme = () => {
+    setIsLight(!isLight);
+  };
+
+  const markAllRead = () => {
+    setNotifications(notifications.map(n => ({ ...n, unread: false })));
+  };
+
+  const removeNotification = (id: number) => {
+    setNotifications(notifications.filter(n => n.id !== id));
+  };
+
+  const unreadCount = useMemo(() => {
+    return notifications.filter(n => n.unread).length;
+  }, [notifications]);
 
   // Dynamic Theme Colors depending on active Dimension
   const theme = useMemo(() => {
@@ -70,7 +140,7 @@ export function Layout() {
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex overflow-hidden selection:bg-emerald-500/30">
       
       {/* Sidebar Container */}
-      <aside className="w-64 glass-panel border-r border-slate-700/50 hidden md:flex flex-col relative z-20">
+      <aside className="w-64 glass-panel border-r border-slate-700/50 hidden md:flex flex-col relative z-20 transition-all duration-350">
         
         {/* Global Branding Header */}
         <div className="h-16 flex items-center px-6 border-b border-slate-700/50">
@@ -89,9 +159,9 @@ export function Layout() {
             <button
               onClick={() => setDimension('alimentaria')}
               className={cn(
-                "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center",
+                "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center border border-transparent",
                 dimension === 'alimentaria'
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 shadow-sm"
+                  ? "bg-emerald-500/10 text-emerald-450 border-emerald-500/25 shadow-sm font-black"
                   : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
               )}
             >
@@ -101,21 +171,21 @@ export function Layout() {
             <button
               onClick={() => setDimension('desastres')}
               className={cn(
-                "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center",
+                "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center border border-transparent",
                 dimension === 'desastres'
-                  ? "bg-rose-500/10 text-rose-450 border border-rose-500/25 shadow-sm"
+                  ? "bg-rose-500/10 text-rose-500 border-rose-500/25 shadow-sm font-black"
                   : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
               )}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-450 mr-2 shrink-0 animate-pulse"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-2 shrink-0 animate-pulse"></span>
               Gestión de Desastres
             </button>
             <button
               onClick={() => setDimension('recursos')}
               className={cn(
-                "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center",
+                "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center border border-transparent",
                 dimension === 'recursos'
-                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/25 shadow-sm"
+                  ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/25 shadow-sm font-black"
                   : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
               )}
             >
@@ -133,13 +203,13 @@ export function Layout() {
                 key={item.name}
                 to={item.href}
                 className={cn(
-                  'flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group',
+                  'flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group text-xs font-bold',
                   isActive
                     ? theme.activeLinkClass
                     : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                 )}
               >
-                <item.icon className={cn('w-5 h-5 mr-3 transition-transform group-hover:scale-110', isActive ? theme.activeIconClass : 'text-slate-500')} />
+                <item.icon className={cn('w-4 h-4 mr-3 transition-transform group-hover:scale-110', isActive ? theme.activeIconClass : 'text-slate-500')} />
                 {item.name}
               </NavLink>
             );
@@ -168,12 +238,12 @@ export function Layout() {
         <div className={cn("absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none transition-all duration-500", theme.glow2)} />
 
         {/* Top Header */}
-        <header className="h-16 glass-panel border-b border-slate-700/50 flex items-center justify-between px-6 z-10 sticky top-0">
+        <header className="h-16 glass-panel border-b border-slate-700/50 flex items-center justify-between px-6 z-30 sticky top-0 transition-all duration-350">
           <div className="flex items-center md:hidden">
             <Menu className="w-6 h-6 text-slate-400 cursor-pointer" />
           </div>
           
-          <div className="hidden md:flex items-center bg-slate-800/50 border border-slate-700/50 rounded-full px-4 py-1.5 focus-within:border-slate-500/50 focus-within:ring-1 focus-within:ring-slate-550/40 transition-all">
+          <div className="hidden md:flex items-center bg-slate-800/50 border border-slate-700/50 rounded-full px-4 py-1.5 focus-within:border-slate-550/50 transition-all">
             <Search className="w-4 h-4 text-slate-400" />
             <input 
               type="text" 
@@ -182,11 +252,119 @@ export function Layout() {
             />
           </div>
 
-          <div className="flex items-center space-x-4">
-            <button className="relative p-2 text-slate-400 hover:text-slate-200 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse"></span>
+          <div className="flex items-center space-x-4 relative">
+            {/* Professional Light Mode Toggle Button */}
+            <button 
+              onClick={toggleTheme}
+              className="flex items-center space-x-2 px-3 py-1.5 bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 rounded-full transition-all text-xs font-bold"
+              title="Alternar Perfil Lumínico del Sistema"
+            >
+              {isLight ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wider font-mono">Claro Profesional</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">Oscuro Científico</span>
+                </>
+              )}
             </button>
+
+            {/* Notifications Bell Icon */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={cn(
+                  "relative p-2 text-slate-400 hover:text-slate-200 transition-colors rounded-full",
+                  showNotifications ? "bg-slate-800 text-slate-200" : "hover:bg-slate-800/30"
+                )}
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Functional Notifications Dropdown */}
+              {showNotifications && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowNotifications(false)} 
+                  />
+                  <div className="absolute right-0 mt-3 w-96 bg-slate-900/95 border border-slate-850 rounded-xl shadow-2xl z-50 p-4 animate-fade-in font-sans glass-panel text-xs text-slate-300">
+                    <div className="flex justify-between items-center pb-2.5 border-b border-slate-800 mb-3">
+                      <span className="font-bold text-slate-200 flex items-center">
+                        <ShieldAlert className="w-4 h-4 text-rose-500 mr-2" />
+                        Centro de Notificaciones N.E.X.U.S.
+                      </span>
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={markAllRead}
+                          className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold hover:underline"
+                        >
+                          Marcar todo leído
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                      {notifications.length === 0 ? (
+                        <div className="text-center py-6 text-slate-500 font-mono">
+                          <CheckCircle2 className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                          No hay alertas activas en el servidor.
+                        </div>
+                      ) : (
+                        notifications.map((item) => (
+                          <div 
+                            key={item.id} 
+                            className={cn(
+                              "p-3 rounded-lg border relative group transition-all",
+                              item.unread 
+                                ? "bg-slate-850/80 border-slate-800 text-slate-200" 
+                                : "bg-slate-900/40 border-slate-850 text-slate-400 opacity-75"
+                            )}
+                          >
+                            <div className="flex justify-between items-start font-bold mb-1">
+                              <span className={cn(
+                                "text-[9px] px-1.5 py-0.5 rounded font-mono",
+                                item.type === 'warning' ? "bg-amber-500/10 text-amber-400" :
+                                item.type === 'danger' ? "bg-rose-500/10 text-rose-455" :
+                                item.type === 'success' ? "bg-emerald-500/10 text-emerald-450" :
+                                "bg-cyan-500/10 text-cyan-450"
+                              )}>
+                                {item.category}
+                              </span>
+                              <span className="text-[8px] text-slate-500 font-mono">{item.time}</span>
+                            </div>
+                            <p className="text-[10px] leading-relaxed pr-6">{item.message}</p>
+                            <button 
+                              onClick={() => removeNotification(item.id)}
+                              className="absolute top-2 right-2 text-slate-600 hover:text-slate-400 transition-colors"
+                              title="Descartar notificación"
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="mt-3.5 pt-2 border-t border-slate-800 text-center">
+                      <span className="text-[8px] text-slate-500 font-mono flex items-center justify-center">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 mr-1.5" />
+                        Monitoreo continuo conectado a CEPLAN + SENAMHI + IGP
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             <div className={cn("px-3 py-1 text-xs font-semibold rounded-full flex items-center transition-all duration-300", theme.headerPill)}>
               <span className="w-1.5 h-1.5 bg-current rounded-full mr-2 animate-pulse"></span>
               {theme.headerPillText}
@@ -202,3 +380,4 @@ export function Layout() {
     </div>
   );
 }
+

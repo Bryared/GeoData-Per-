@@ -1,20 +1,38 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Map, Truck, AlertTriangle, Flame, Activity, Sun, CloudRain, Thermometer, Compass, RotateCcw, MapPin, Sparkles, ShieldAlert } from 'lucide-react';
+import { Truck, AlertTriangle, Flame, Activity, Sun, CloudRain, Thermometer, Compass, RotateCcw, MapPin, Sparkles, ShieldAlert, Droplet } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useDimension } from '../../context/DimensionContext';
 
-export function MandoRiesgos() {
-  const { setDimension } = useDimension();
+function InfoTooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-block ml-2 align-middle select-none z-30">
+      <button 
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        className="w-4 h-4 rounded-full bg-cyan-500/10 border border-cyan-500/35 text-cyan-400 text-[10px] font-extrabold flex items-center justify-center cursor-help transition-all hover:bg-cyan-500/20 active:scale-95 shadow-sm"
+        type="button"
+      >
+        !
+      </button>
+      {open && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-950/95 border border-slate-800 rounded-lg text-[10px] text-slate-350 font-sans shadow-2xl z-50 leading-relaxed pointer-events-none block whitespace-normal normal-case font-normal text-left">
+          <span className="font-extrabold text-cyan-455 uppercase tracking-widest block mb-1 text-[9px] border-b border-slate-900 pb-0.5 font-mono">Soporte Técnico de Operación:</span>
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
 
-  // Logistics & Disasters simulation states
+export function MandoRiesgos() {
+  const { dimension, setDimension } = useDimension();
+
+  // Simulation states
   const [landslideSimulated, setLandslideSimulated] = useState(false);
   const [recalculatingLogistics, setRecalculatingLogistics] = useState(false);
   const [activePoint, setActivePoint] = useState<string | null>(null);
-
-  // Automatically sync dimension on page enter
-  useEffect(() => {
-    setDimension('desastres');
-  }, [setDimension]);
 
   // Load and sync landslide simulation state from local storage
   const loadLandslideState = () => {
@@ -55,131 +73,244 @@ export function MandoRiesgos() {
     }
   };
 
-  // Geographic Point Data for SVG Vector Map of Peru
-  const mapPoints = useMemo(() => [
-    {
-      id: 'piura',
-      name: 'Bajo Piura (Suelos)',
-      x: 105,
-      y: 105,
-      type: 'cultivo',
-      status: 'Monitoreo Edafológico',
-      details: 'Conductividad: 1.8 dS/m | pH: 7.2 | Cultivo: Algodón Pima. Preparado para prescripción VRA.',
-      temp: '29.2°C',
-      rain: '0.2 mm/d',
-      humidity: '62%'
-    },
-    {
-      id: 'chiclayo',
-      name: 'Valle Chancay (Canales)',
-      x: 135,
-      y: 155,
-      type: 'hidrologia',
-      status: 'Sensor Infiltración',
-      details: 'Caudal: 28.5 m³/s | Infiltración: 4.2 m/d | Richards PDE solver en espera.',
-      temp: '26.1°C',
-      rain: '0.5 mm/d',
-      humidity: '68%'
-    },
-    {
-      id: 'casma',
-      name: 'Casma KM 385 (Quebrada)',
-      x: 190,
-      y: 220,
-      type: 'desastre',
-      status: landslideSimulated ? 'BLOQUEADO por Huaico' : 'Alerta Geológica Moderada',
-      details: landslideSimulated 
-        ? 'Derrumbe de talud registrado. Arista vial Panamericana = ∞. pgRouting recalculado.' 
-        : 'Inclinómetro SL-INCL-301 registra 2.8 mm/h de corrimiento de ladera.',
-      temp: '23.5°C',
-      rain: landslideSimulated ? '48.5 mm/d (Lluvia Severa)' : '12.4 mm/d',
-      humidity: '85%'
-    },
-    {
-      id: 'huaraz',
-      name: 'Huaraz (Bypass Andino)',
-      x: 225,
-      y: 230,
-      type: 'desvío',
-      status: landslideSimulated ? 'Vía de Emergencia Activa' : 'Standby',
-      details: 'Desvío de camiones hacia el Callejón de Huaylas a 3,050 msnm.',
-      temp: '14.2°C',
-      rain: '2.4 mm/d',
-      humidity: '58%'
-    },
-    {
-      id: 'canta',
-      name: 'Canta Hub (Cruce de Sierra)',
-      x: 255,
-      y: 300,
-      type: 'desvío',
-      status: landslideSimulated ? 'Tránsito Fluido (Bypass)' : 'Standby',
-      details: 'Carretera Canta-Huallay. Punto de control logístico de cadena de frío.',
-      temp: '11.8°C',
-      rain: '1.2 mm/d',
-      humidity: '60%'
-    },
-    {
-      id: 'lima',
-      name: 'Lima (Costa Central)',
-      x: 260,
-      y: 335,
-      type: 'desastre_sismo',
-      status: 'ALERTA SÍSMICA CRÍTICA',
-      details: 'IGP detecta aceleración anómala. Malla de evacuación pgRouting activa para Lima y Callao.',
-      temp: '21.0°C',
-      rain: '0.0 mm/d',
-      humidity: '78%'
-    },
-    {
-      id: 'tambopata',
-      name: 'Reserva Tambopata (Alerta)',
-      x: 430,
-      y: 350,
-      type: 'desastre_fuego',
-      status: 'INCENDIO FORESTAL ACTIVO',
-      details: 'Pirómetro térmico TH-PYRO-402 registra foco de calor de 98°C. NDVI satelital NBR = 0.12.',
-      temp: '38.4°C (Foco Térmico)',
-      rain: '0.0 mm/d',
-      humidity: '28%'
-    },
-    {
-      id: 'iquitos',
-      name: 'Iquitos (Amazonía Norte)',
-      x: 340,
-      y: 110,
-      type: 'desastre_inundacion',
-      status: 'DESBORDE DE RÍO ACTIVO',
-      details: 'SENAMHI reporta crecida de nivel de río Amazonas (+3.2m sobre cota de desborde). Saneamiento rural comprometido.',
-      temp: '31.2°C',
-      rain: '65.2 mm/d',
-      humidity: '94%'
-    },
-    {
-      id: 'puno',
-      name: 'Puno (Altiplano)',
-      x: 410,
-      y: 420,
-      type: 'desastre_helada',
-      status: 'HELADA EXTREMA',
-      details: 'Temperatura nocturna desciende a -12°C. Estrés térmico extremo en parcelas de quinua.',
-      temp: '-12.0°C',
-      rain: '0.0 mm/d',
-      humidity: '35%'
-    },
-    {
-      id: 'arequipa',
-      name: 'Arequipa (Cuenca Sur)',
-      x: 360,
-      y: 420,
-      type: 'desastre_sequia',
-      status: 'ESTRÉS HÍDRICO CRÓNICO',
-      details: 'Sobreexplotación de acuíferos detectada. Evapotranspiración superior a recarga en 42%.',
-      temp: '22.8°C',
-      rain: '0.0 mm/d',
-      humidity: '40%'
+  // Geographic Point Data for SVG Vector Map of Peru depending on active Dimension
+  const mapPoints = useMemo(() => {
+    if (dimension === 'alimentaria') {
+      // Modality: Seguridad Alimentaria - Route planning & shipping hubs
+      return [
+        {
+          id: 'piura_agro',
+          name: 'Fundo Piura (Origen)',
+          x: 80,
+          y: 70,
+          type: 'origen',
+          status: 'Cosecha Lista',
+          details: 'Algodón Pima y Arroz. 45 Tn listas para embarque hacia Lima.',
+          temp: '29.2°C',
+          rain: '0.2 mm/d',
+          humidity: '62%'
+        },
+        {
+          id: 'chiclayo_agro',
+          name: 'Fundo Chancay (Origen)',
+          x: 140,
+          y: 130,
+          type: 'origen',
+          status: 'Transporte en Carga',
+          details: 'Maíz Amarillo Duro. 30 Tn cargadas en camión TRUCK-PE-01.',
+          temp: '26.1°C',
+          rain: '0.5 mm/d',
+          humidity: '68%'
+        },
+        {
+          id: 'trujillo_hub',
+          name: 'Trujillo Logística (Hub)',
+          x: 200,
+          y: 190,
+          type: 'hub',
+          status: landslideSimulated ? 'Bypass pgRouting Activado' : 'Tránsito Normal',
+          details: landslideSimulated 
+            ? 'Cierre de Panamericana en Casma. Redireccionamiento de flota por la sierra.'
+            : 'Puerto logístico. Despacho directo por la Panamericana Norte.',
+          temp: '24.2°C',
+          rain: '0.1 mm/d',
+          humidity: '72%'
+        },
+        {
+          id: 'casma_choke',
+          name: 'Casma KM 385 (Quebrada)',
+          x: 230,
+          y: 230,
+          type: 'choke_point',
+          status: landslideSimulated ? 'BLOQUEADO' : 'Libre',
+          details: landslideSimulated 
+            ? '¡HUAICO DETECTADO! Vía bloqueada. Arista vial Panamericana = costo infinito.' 
+            : 'Inclinómetros estables. Panamericana transitable.',
+          temp: '23.5°C',
+          rain: landslideSimulated ? '48.5 mm/d' : '12.4 mm/d',
+          humidity: '85%'
+        },
+        {
+          id: 'huaraz_bypass',
+          name: 'Huaraz (Sierra Bypass)',
+          x: 280,
+          y: 200,
+          type: 'bypass_point',
+          status: landslideSimulated ? 'Flujo de Desvío Activo' : 'Standby',
+          details: 'Paso por el Callejón de Huaylas a 3,050 msnm. Conservación térmica de carga a 3,050 msnm.',
+          temp: '14.2°C',
+          rain: '2.4 mm/d',
+          humidity: '58%'
+        },
+        {
+          id: 'canta_bypass',
+          name: 'Canta (Sierra Bypass)',
+          x: 340,
+          y: 310,
+          type: 'bypass_point',
+          status: landslideSimulated ? 'Flujo de Desvío Activo' : 'Standby',
+          details: 'Carretera Canta-Huallay. Punto de control logístico y cadena de frío.',
+          temp: '11.8°C',
+          rain: '1.2 mm/d',
+          humidity: '60%'
+        },
+        {
+          id: 'lima_mayorista',
+          name: 'Mercado Mayorista (Destino)',
+          x: 380,
+          y: 380,
+          type: 'destino',
+          status: 'Recepción Lista',
+          details: 'Punto de venta y abastecimiento de la megaciudad. Stock resguardado.',
+          temp: '21.0°C',
+          rain: '0.0 mm/d',
+          humidity: '78%'
+        }
+      ];
+    } else if (dimension === 'recursos') {
+      // Modality: Hidrología & Reservas - Basins, Poechos reservoir, water resources
+      return [
+        {
+          id: 'poechos',
+          name: 'Represa Poechos (Piura)',
+          x: 80,
+          y: 70,
+          type: 'reservorio',
+          status: 'Carga: 68% Capacidad',
+          details: 'Volumen: 320 Hm³. Caudal de salida regulado para riego de Bajo Piura.',
+          temp: '30.1°C',
+          rain: '0.0 mm/d',
+          humidity: '55%'
+        },
+        {
+          id: 'chancay_basin',
+          name: 'Cuenca Río Chancay',
+          x: 140,
+          y: 130,
+          type: 'cuenca',
+          status: 'Evapotranspiración Crítica',
+          details: 'Caudal de ingreso: 28.5 m³/s. NDWI satelital < 0.1 indica alto estrés foliar.',
+          temp: '26.1°C',
+          rain: '0.5 mm/d',
+          humidity: '68%'
+        },
+        {
+          id: 'amazon_river',
+          name: 'Río Amazonas (Iquitos)',
+          x: 480,
+          y: 80,
+          type: 'rio',
+          status: 'Alerta de Crecida pluvial',
+          details: 'Nivel del agua: +3.2m sobre cota de desborde. Ingesta de datos de ANA en curso.',
+          temp: '31.2°C',
+          rain: '65.2 mm/d',
+          humidity: '94%'
+        },
+        {
+          id: 'titicaca_lake',
+          name: 'Lago Titicaca (Puno)',
+          x: 460,
+          y: 440,
+          type: 'lago',
+          status: 'Estable',
+          details: 'Temperatura superficial: 12.4°C. Monitor de recarga hídrica del Altiplano.',
+          temp: '-2.0°C',
+          rain: '0.0 mm/d',
+          humidity: '35%'
+        },
+        {
+          id: 'chili_aquifer',
+          name: 'Acuífero Chili (Arequipa)',
+          x: 420,
+          y: 420,
+          type: 'acuifero',
+          status: 'Déficit de Infiltración',
+          details: 'Richards PDE calcula recarga en subsuelo. Evapotranspiración excede infiltración.',
+          temp: '22.8°C',
+          rain: '0.0 mm/d',
+          humidity: '40%'
+        }
+      ];
+    } else {
+      // Modality: Gestión de Desastres - Seismic threats, landslides, forest fires
+      return [
+        {
+          id: 'tambopata',
+          name: 'Reserva Tambopata (Alerta)',
+          x: 480,
+          y: 340,
+          type: 'desastre_fuego',
+          status: 'INCENDIO FORESTAL ACTIVO',
+          details: 'Foco térmico TH-PYRO-402 detectado de 98°C. NDVI espectral bajo alerta.',
+          temp: '38.4°C',
+          rain: '0.0 mm/d',
+          humidity: '28%'
+        },
+        {
+          id: 'casma',
+          name: 'Casma KM 385 (Quebrada)',
+          x: 230,
+          y: 230,
+          type: 'desastre',
+          status: landslideSimulated ? 'BLOQUEADO por Huaico' : 'Alerta de Deslizamiento',
+          details: landslideSimulated 
+            ? '¡Huaico detectado en Panamericana! Bloqueo total de vía. Bypass pgRouting en uso.' 
+            : 'Inclinómetro SL-INCL-301 registra 2.8 mm/h de corrimiento de ladera.',
+          temp: '23.5°C',
+          rain: landslideSimulated ? '48.5 mm/d' : '12.4 mm/d',
+          humidity: '85%'
+        },
+        {
+          id: 'lima',
+          name: 'Lima (Costa Central)',
+          x: 380,
+          y: 380,
+          type: 'desastre_sismo',
+          status: 'ALERTA SÍSMICA CRÍTICA',
+          details: 'Aceleración sísmica detectada por IGP. Plan de contingencia y evacuación activo.',
+          temp: '21.0°C',
+          rain: '0.0 mm/d',
+          humidity: '78%'
+        },
+        {
+          id: 'iquitos',
+          name: 'Iquitos (Amazonía Norte)',
+          x: 480,
+          y: 80,
+          type: 'desastre_inundacion',
+          status: 'DESBORDE DE RÍO ACTIVO',
+          details: 'Crecida pluvial extrema del río Amazonas. Saneamiento y accesos rurales comprometidos.',
+          temp: '31.2°C',
+          rain: '65.2 mm/d',
+          humidity: '94%'
+        },
+        {
+          id: 'puno',
+          name: 'Puno (Altiplano)',
+          x: 460,
+          y: 440,
+          type: 'desastre_helada',
+          status: 'HELADA AGRÍCOLA EXTREMA',
+          details: 'Temperatura desciende a -12°C. Estrés por congelación en parcelas de quinua.',
+          temp: '-12.0°C',
+          rain: '0.0 mm/d',
+          humidity: '35%'
+        },
+        {
+          id: 'arequipa',
+          name: 'Arequipa (Cuenca Sur)',
+          x: 420,
+          y: 420,
+          type: 'desastre_sequia',
+          status: 'ESTRÉS HÍDRICO CRÓNICO',
+          details: 'Déficit severo y prolongado. Descenso de reservas de agua y sobreexplotación de pozos.',
+          temp: '22.8°C',
+          rain: '0.0 mm/d',
+          humidity: '40%'
+        }
+      ];
     }
-  ], [landslideSimulated]);
+  }, [dimension, landslideSimulated]);
 
   // Selected point details helper
   const selectedPoint = useMemo(() => {
@@ -188,142 +319,289 @@ export function MandoRiesgos() {
 
   return (
     <div className="h-full flex flex-col space-y-4">
-      {/* Title Header with global Navigation Tabs */}
+      {/* Title Header and segment controller tab switcher */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-100 flex items-center">
-            <Map className="w-8 h-8 text-rose-500 mr-3 animate-pulse" />
-            Mando de Riesgos Territoriales & Desastres (N.E.X.U.S. 4D)
+            {dimension === 'alimentaria' ? (
+              <>
+                <Compass className="w-8 h-8 text-emerald-400 mr-3 animate-pulse" />
+                Mando de Riesgos Logísticos
+              </>
+            ) : dimension === 'recursos' ? (
+              <>
+                <Droplet className="w-8 h-8 text-cyan-400 mr-3 animate-pulse" />
+                Mando de Riesgos: Recursos Hidrológicos
+              </>
+            ) : (
+              <>
+                <ShieldAlert className="w-8 h-8 text-rose-500 mr-3 animate-pulse" />
+                Mando de Riesgos y Desastres Naturales
+              </>
+            )}
           </h1>
           <p className="text-slate-400 mt-1">
-            Monitoreo geoespacial en tiempo real de sismos, huaicos, inundaciones, heladas y desvíos logísticos con pgRouting.
+            {dimension === 'alimentaria' 
+              ? 'Optimización proactiva de la red vial y rutas de abastecimiento en milisegundos con motor Golang (nexus_router) sobre red PostGIS.'
+              : dimension === 'recursos'
+              ? 'Monitoreo dinámico de cuencas, represas y balances de infiltración edafológica Richards PDE.'
+              : 'Monitoreo geoespacial en tiempo real de sismos, huaicos, heladas e incendios en todo el territorio nacional.'
+            }
           </p>
+        </div>
+
+        {/* Floating segment controller tab switcher to change dimension */}
+        <div className="flex bg-slate-900/60 p-1 rounded-lg border border-slate-800 self-start shrink-0">
+          <button 
+            onClick={() => { setDimension('alimentaria'); setActivePoint(null); }}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center",
+              dimension === 'alimentaria' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "text-slate-450 hover:text-slate-200"
+            )}
+          >
+            <Compass className="w-3.5 h-3.5 mr-1.5" />
+            Ruta del Agricultor
+          </button>
+          <button 
+            onClick={() => { setDimension('desastres'); setActivePoint(null); }}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center",
+              dimension === 'desastres' ? "bg-rose-500/10 text-rose-450 border border-rose-500/20" : "text-slate-450 hover:text-slate-200"
+            )}
+          >
+            <ShieldAlert className="w-3.5 h-3.5 mr-1.5" />
+            Mapa de Desastres
+          </button>
+          <button 
+            onClick={() => { setDimension('recursos'); setActivePoint(null); }}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center",
+              dimension === 'recursos' ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-slate-450 hover:text-slate-200"
+            )}
+          >
+            <Droplet className="w-3.5 h-3.5 mr-1.5" />
+            Hidrología & Reservas
+          </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 flex-1 min-h-[600px]">
         
-        {/* Left Column: List of alerts and system status */}
+        {/* Left Column: Alerts list, Routing status or Aquifers summary */}
         <div className="xl:col-span-1 space-y-4 flex flex-col justify-between max-h-[620px]">
           <div className="space-y-4 flex-1 flex flex-col min-h-0">
-            <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 flex flex-col min-h-0 flex-1">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center shrink-0">
-                <ShieldAlert className="w-4 h-4 mr-2 text-rose-500 animate-pulse" />
-                Alertas en Tiempo Real (N.E.X.U.S. 4D)
-              </h3>
-              
-              <div className="space-y-2.5 overflow-y-auto pr-1 flex-1">
-                {/* Tambopata forest fire */}
-                <div 
-                  onClick={() => setActivePoint('tambopata')}
-                  className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-lg text-xs cursor-pointer hover:bg-rose-500/10 transition-colors"
-                >
-                  <div className="flex justify-between items-center font-bold text-rose-400">
-                    <span className="flex items-center"><Flame className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Incendio Forestal</span>
-                    <span className="text-[9px] bg-rose-500/20 px-1.5 py-0.5 rounded">CRÍTICO</span>
+            
+            {dimension === 'alimentaria' ? (
+              <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 flex flex-col min-h-0 flex-1 space-y-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center shrink-0">
+                  <Compass className="w-4 h-4 mr-2 text-emerald-450 animate-pulse" />
+                  Buscador de Ruta Óptima (SAT-Agro Pro)
+                </h3>
+                
+                <div className="space-y-3.5 overflow-y-auto pr-1 flex-1 text-xs">
+                  <div className="p-3 bg-slate-950 rounded-lg border border-slate-900 leading-relaxed space-y-2">
+                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                      <span>PUNTO DE SALIDA:</span>
+                      <span className="font-bold text-emerald-400">PIURA / CHANCAY</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                      <span>PUNTO DE DESTINO:</span>
+                      <span className="font-bold text-cyan-400">LIMA MAYORISTA</span>
+                    </div>
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
-                    Tambopata: Foco térmico de 98°C activo en selva baja. NDVI/NBR bajo alerta.
-                  </p>
-                </div>
 
-                {/* Casma landslide */}
-                <div 
-                  onClick={() => setActivePoint('casma')}
-                  className={cn(
-                    "p-3 rounded-lg text-xs cursor-pointer transition-colors",
+                  <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg space-y-1.5">
+                    <div className="font-bold text-emerald-400 flex items-center justify-between">
+                      <span className="flex items-center"><Truck className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Estado de Canal Logístico</span>
+                      <InfoTooltip text="El módulo SAT-Agro Pro emplea sensores telemétricos LoRa integrados en contenedores refrigerados para registrar temperatura, vibración de talud y humedad foliar en tiempo real, garantizando la preservación de la carga." />
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-normal">
+                      Monitoreo activo de la cadena de frío en flotas.
+                    </p>
+                  </div>
+
+                  <div className={cn(
+                    "p-3 rounded-lg space-y-1.5 border transition-all",
                     landslideSimulated 
-                      ? "bg-rose-500/10 border border-rose-500/25"
-                      : "bg-amber-500/5 border border-amber-500/10 hover:bg-amber-500/10"
-                  )}
-                >
-                  <div className={cn("flex justify-between items-center font-bold", landslideSimulated ? "text-rose-400" : "text-amber-400")}>
-                    <span className="flex items-center"><AlertTriangle className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Falla Talud / Huaico</span>
-                    <span className="text-[9px] bg-amber-500/20 px-1.5 py-0.5 rounded">{landslideSimulated ? 'BLOQUEADO' : 'ALERTA'}</span>
+                      ? "bg-rose-500/10 border-rose-500/25 text-rose-455"
+                      : "bg-cyan-500/5 border-cyan-500/10 text-cyan-400"
+                  )}>
+                    <div className="font-bold flex items-center justify-between">
+                      <span className="flex items-center"><AlertTriangle className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Ruta Panamericana</span>
+                      <InfoTooltip text="Monitoreo satelital y de radar Sentinel-2 fusionado con inclinómetros a pie de talud. La ocurrencia de huaicos o deslizamientos de tierra actualiza dinámicamente el peso de coste de aristas en pgRouting a infinito." />
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-normal">
+                      {landslideSimulated 
+                        ? "Panamericana Norte cortada en Casma. Desvío activo." 
+                        : "Carretera libre. Tránsito fluido directo para el transporte."}
+                    </p>
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
-                    {landslideSimulated 
-                      ? "Casma KM 385: ¡Huaico detectado! Panamericana Norte bloqueada. Enrutamiento alternativo activado."
-                      : "Casma KM 385: Inclinómetros registran 2.8 mm/h de corrimiento de ladera."}
-                  </p>
-                </div>
-
-                {/* Lima seismic alert */}
-                <div 
-                  onClick={() => setActivePoint('lima')}
-                  className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-lg text-xs cursor-pointer hover:bg-rose-500/10 transition-colors"
-                >
-                  <div className="flex justify-between items-center font-bold text-rose-400">
-                    <span className="flex items-center"><Activity className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Sismo (Costa Central)</span>
-                    <span className="text-[9px] bg-rose-500/20 px-1.5 py-0.5 rounded">CRÍTICO</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
-                    Lima & Callao: Aceleración sísmica detectada por IGP. Plan de evacuación activo.
-                  </p>
-                </div>
-
-                {/* Iquitos flooding */}
-                <div 
-                  onClick={() => setActivePoint('iquitos')}
-                  className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-lg text-xs cursor-pointer hover:bg-rose-500/10 transition-colors"
-                >
-                  <div className="flex justify-between items-center font-bold text-rose-400">
-                    <span className="flex items-center"><CloudRain className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Inundación Amazonas</span>
-                    <span className="text-[9px] bg-rose-500/20 px-1.5 py-0.5 rounded">CRÍTICO</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
-                    Iquitos: Crecida de río Amazonas +3.2m sobre cota de desborde. Riesgo de inundación.
-                  </p>
-                </div>
-
-                {/* Puno frost */}
-                <div 
-                  onClick={() => setActivePoint('puno')}
-                  className="p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-lg text-xs cursor-pointer hover:bg-cyan-500/10 transition-colors"
-                >
-                  <div className="flex justify-between items-center font-bold text-cyan-400">
-                    <span className="flex items-center"><Thermometer className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Helada Agrícola</span>
-                    <span className="text-[9px] bg-cyan-500/20 px-1.5 py-0.5 rounded">ALERTA</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
-                    Puno: Helada extrema nocturna a -12°C. Afectación severa en parcelas de quinua.
-                  </p>
-                </div>
-
-                {/* Arequipa drought */}
-                <div 
-                  onClick={() => setActivePoint('arequipa')}
-                  className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg text-xs cursor-pointer hover:bg-amber-500/10 transition-colors"
-                >
-                  <div className="flex justify-between items-center font-bold text-amber-400">
-                    <span className="flex items-center"><Sun className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Estrés Hídrico</span>
-                    <span className="text-[9px] bg-amber-500/20 px-1.5 py-0.5 rounded">ALERTA</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
-                    Arequipa: Sequía severa y descenso crítico de recarga en pozos de la cuenca sur.
-                  </p>
                 </div>
               </div>
-            </div>
+            ) : dimension === 'recursos' ? (
+              <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 flex flex-col min-h-0 flex-1 space-y-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center shrink-0">
+                  <Droplet className="w-4 h-4 mr-2 text-cyan-400" />
+                  Balances Hidrológicos (O.M.N.I. TERRA)
+                </h3>
+                
+                <div className="space-y-3 overflow-y-auto pr-1 flex-1 text-xs">
+                  <div className="p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-lg space-y-1">
+                    <span className="text-[9px] bg-cyan-500/20 px-1.5 py-0.5 rounded text-cyan-400 font-bold tracking-wider flex items-center justify-between">
+                      <span>RICHARDS PDE SOLVER</span>
+                      <InfoTooltip text="Fusión de reflectancia de Sentinel-2 con ecuaciones diferenciales parciales de Richards para predecir la pluma de salinidad y evapotranspiración foliar en subsuelo (20/40/60 cm) sin instrumentación física costosa." />
+                    </span>
+                    <p className="text-[10px] text-slate-450 mt-1.5 leading-normal">
+                      Red neuronal PINN calcula infiltración de humedad.
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 rounded-lg border border-slate-900 space-y-2 text-[10px] font-mono text-slate-455">
+                    <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                      <span>Carga Poechos:</span>
+                      <span className="font-bold text-cyan-400">68% (Caudal controlado)</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                      <span>Riego Bajo Piura:</span>
+                      <span className="font-bold text-emerald-450">Optimizado por Richards</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                      <span>Conductividad Rizósfera:</span>
+                      <span className="font-bold text-amber-500">1.8 dS/m (Sano)</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-lg space-y-1.5">
+                    <div className="font-bold text-rose-400 flex items-center justify-between">
+                      <span className="flex items-center"><AlertTriangle className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Estrés Hídrico Crónico</span>
+                      <InfoTooltip text="Evaluación hidrológica a escala de cuencas de la costa norte y altiplano. Combina datos históricos e in-situ del ANA y reflectancias multiespectrales para predecir déficits de riego." />
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-normal">
+                      Zonas agrícolas del sur presentan recarga de acuíferos negativa.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 flex flex-col min-h-0 flex-1">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center shrink-0">
+                  <ShieldAlert className="w-4 h-4 mr-2 text-rose-500 animate-pulse" />
+                  Alertas en Tiempo Real (N.E.X.U.S. 4D)
+                </h3>
+                
+                <div className="space-y-2.5 overflow-y-auto pr-1 flex-1">
+                  {/* Tambopata forest fire */}
+                  <div 
+                    onClick={() => setActivePoint('tambopata')}
+                    className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-lg text-xs cursor-pointer hover:bg-rose-500/10 transition-colors"
+                  >
+                    <div className="flex justify-between items-center font-bold text-rose-455">
+                      <span className="flex items-center"><Flame className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Incendio Forestal</span>
+                      <span className="text-[9px] bg-rose-500/20 px-1.5 py-0.5 rounded">CRÍTICO</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                      Tambopata: Foco térmico de 98°C activo en selva baja. NDVI/NBR bajo alerta.
+                    </p>
+                  </div>
+
+                  {/* Casma landslide */}
+                  <div 
+                    onClick={() => setActivePoint('casma')}
+                    className={cn(
+                      "p-3 rounded-lg text-xs cursor-pointer transition-colors",
+                      landslideSimulated 
+                        ? "bg-rose-500/10 border border-rose-500/25"
+                        : "bg-amber-500/5 border border-amber-500/10 hover:bg-amber-500/10"
+                    )}
+                  >
+                    <div className={cn("flex justify-between items-center font-bold", landslideSimulated ? "text-rose-455" : "text-amber-400")}>
+                      <span className="flex items-center"><AlertTriangle className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Falla Talud / Huaico</span>
+                      <span className="text-[9px] bg-amber-500/20 px-1.5 py-0.5 rounded">{landslideSimulated ? 'BLOQUEADO' : 'ALERTA'}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                      {landslideSimulated 
+                        ? "Casma KM 385: ¡Huaico detectado! Panamericana Norte bloqueada. Enrutamiento alternativo activado."
+                        : "Casma KM 385: Inclinómetros registran 2.8 mm/h de corrimiento de ladera."}
+                    </p>
+                  </div>
+
+                  {/* Lima seismic alert */}
+                  <div 
+                    onClick={() => setActivePoint('lima')}
+                    className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-lg text-xs cursor-pointer hover:bg-rose-500/10 transition-colors"
+                  >
+                    <div className="flex justify-between items-center font-bold text-rose-455">
+                      <span className="flex items-center"><Activity className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Sismo (Costa Central)</span>
+                      <span className="text-[9px] bg-rose-500/20 px-1.5 py-0.5 rounded">CRÍTICO</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                      Lima & Callao: Aceleración sísmica detectada por IGP. Plan de evacuación activo.
+                    </p>
+                  </div>
+
+                  {/* Iquitos flooding */}
+                  <div 
+                    onClick={() => setActivePoint('iquitos')}
+                    className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-lg text-xs cursor-pointer hover:bg-rose-500/10 transition-colors"
+                  >
+                    <div className="flex justify-between items-center font-bold text-rose-455">
+                      <span className="flex items-center"><CloudRain className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Inundación Amazonas</span>
+                      <span className="text-[9px] bg-rose-500/20 px-1.5 py-0.5 rounded">CRÍTICO</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                      Iquitos: Crecida de río Amazonas +3.2m sobre cota de desborde. Riesgo de inundación.
+                    </p>
+                  </div>
+
+                  {/* Puno frost */}
+                  <div 
+                    onClick={() => setActivePoint('puno')}
+                    className="p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-lg text-xs cursor-pointer hover:bg-cyan-500/10 transition-colors"
+                  >
+                    <div className="flex justify-between items-center font-bold text-cyan-400">
+                      <span className="flex items-center"><Thermometer className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Helada Agrícola</span>
+                      <span className="text-[9px] bg-cyan-500/20 px-1.5 py-0.5 rounded">ALERTA</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                      Puno: Helada extrema nocturna a -12°C. Afectación severa en parcelas de quinua.
+                    </p>
+                  </div>
+
+                  {/* Arequipa drought */}
+                  <div 
+                    onClick={() => setActivePoint('arequipa')}
+                    className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg text-xs cursor-pointer hover:bg-amber-500/10 transition-colors"
+                  >
+                    <div className="flex justify-between items-center font-bold text-amber-400">
+                      <span className="flex items-center"><Sun className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Estrés Hídrico</span>
+                      <span className="text-[9px] bg-amber-500/20 px-1.5 py-0.5 rounded">ALERTA</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                      Arequipa: Sequía severa y descenso crítico de recarga en pozos de la cuenca sur.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* pgRouting Solver Info Panel */}
             <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 space-y-3 shrink-0">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
                 <Activity className="w-4 h-4 mr-2 text-cyan-400" />
-                Estado de Ruteo (pgRouting)
+                Estado del Motor Lógico
               </h3>
               <div className="space-y-2 text-[11px] text-slate-400 leading-relaxed">
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
-                  <span>Algoritmo de Ruteo:</span>
-                  <span className="font-bold text-slate-300">Dijkstra en Go (Multithread)</span>
+                  <span>Motor Logístico:</span>
+                  <span className="font-bold text-slate-200">Golang (nexus_router)</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
-                  <span>Red Vial Nacional:</span>
-                  <span className="font-bold text-slate-300">1,420,542 Aristas MTC</span>
+                  <span>Red Georreferenciada:</span>
+                  <span className="font-bold text-slate-200">PostGIS (1,420,542 Aristas)</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
-                  <span>Tiempo de Respuesta:</span>
-                  <span className="font-mono font-bold text-cyan-400">En milisegundos</span>
+                  <span>Tiempo de Cómputo:</span>
+                  <span className="font-mono font-bold text-cyan-400">&lt; 15 milisegundos</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
                   <span>Bypass Logístico:</span>
@@ -337,13 +615,14 @@ export function MandoRiesgos() {
 
           {/* Simulating action buttons */}
           <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 space-y-3 shrink-0">
-            <p className="text-[10px] text-slate-500 font-bold leading-normal">
-              Prueba la resistencia algorítmica de la cadena de suministro ante desastres geológicos en vivo:
+            <p className="text-[10px] text-slate-500 font-bold leading-normal flex items-center justify-between">
+              <span>Resiliencia ante desastres geológicos en vivo:</span>
+              <InfoTooltip text="La simulación de huaicos introduce obstrucciones geológicas aleatorias en la red vial nacional de 1.4 millones de aristas. El motor nexus_router recalcula el bypass en la base de datos relacional en milisegundos." />
             </p>
             <button
               onClick={triggerLandslideSimulation}
               disabled={recalculatingLogistics}
-              className="w-full flex items-center justify-center px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-450 border border-rose-500/30 rounded-lg transition-all text-xs font-bold disabled:opacity-50"
+              className="w-full flex items-center justify-center px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-455 border border-rose-500/30 rounded-lg transition-all text-xs font-bold disabled:opacity-50"
             >
               {recalculatingLogistics ? (
                 <>
@@ -417,29 +696,66 @@ export function MandoRiesgos() {
 
               {/* Grid Lines background */}
               <rect x="0" y="0" width="600" height="500" fill="transparent" />
-              <path d="M 0,100 L 600,100 M 0,200 L 600,200 M 0,300 L 600,300 M 0,400 L 600,400 M 100,0 L 100,500 M 200,0 L 200,500 M 300,0 L 300,500 M 400,0 L 400,500" stroke="#334155" strokeWidth="0.5" strokeDasharray="3,8" opacity="0.25" />
-
-              {/* Pacific Ocean Label & Anomaly */}
-              <rect x="5" y="180" width="105" height="150" fill="#082f49" fillOpacity="0.1" rx="5" />
-              <text x="15" y="210" fill="#f43f5e" fontSize="9" fontWeight="bold" opacity="0.9" className="font-mono">
-                OCÉANO PACÍFICO
-              </text>
-              <text x="15" y="225" fill="#f97316" fontSize="8" fontWeight="bold" opacity="0.8" className="font-mono">
-                Anomalía Térmica:
-              </text>
-              <text x="15" y="238" fill="#eab308" fontSize="10" fontWeight="extrabold" opacity="0.95" className="font-mono animate-pulse">
-                El Niño (+2.8°C)
-              </text>
-
-              {/* Warm Ocean Current (El Niño) */}
-              <path 
-                d="M 15,30 C 50,110 70,220 120,330 T 200,470" 
-                fill="none" 
-                stroke="url(#el-nino-grad)" 
-                strokeWidth="5" 
-                strokeDasharray="8,8" 
-                className="animate-dash"
+              
+              {/* Detailed Background Map of Peru (Topography & Satellite dark theme generated in high-fidelity) */}
+              <image 
+                href="/peru_dark_map_bg.png" 
+                x="20" 
+                y="-10" 
+                width="560" 
+                height="520" 
+                opacity="0.55" 
+                style={{ mixBlendMode: 'lighten', pointerEvents: 'none' }} 
               />
+              
+              <path d="M 0,100 L 600,100 M 0,200 L 600,200 M 0,300 L 600,300 M 0,400 L 600,400 M 100,0 L 100,500 M 200,0 L 200,500 M 300,0 L 300,500 M 400,0 L 400,500" stroke="#334155" strokeWidth="0.5" strokeDasharray="3,8" opacity="0.2" />
+
+              {/* Draw Neighboring Countries Outlines (Faint gray, highly realistic GIS contours) */}
+              {/* 1. Ecuador */}
+              <path d="M 95,75 C 75,65 60,55 50,40 C 80,45 110,50 145,55" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
+              <text x="35" y="60" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">ECUADOR</text>
+
+              {/* 2. Colombia */}
+              <path d="M 235,55 C 240,30 260,20 325,35" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
+              <text x="300" y="25" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">COLOMBIA</text>
+
+              {/* 3. Brasil */}
+              <path d="M 325,35 C 420,40 500,60 580,100 C 585,200 580,280 475,320" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
+              <text x="500" y="200" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">BRASIL</text>
+
+              {/* 4. Bolivia */}
+              <path d="M 475,320 C 530,350 560,400 520,470 C 480,460 460,440 445,420" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
+              <text x="490" y="440" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">BOLIVIA</text>
+
+              {/* 5. Chile */}
+              <path d="M 425,465 C 440,490 445,500 450,500" fill="none" stroke="#334155" strokeWidth="1.5" strokeDasharray="3,6" opacity="0.4" />
+              <text x="460" y="490" fill="#475569" fontSize="8" fontWeight="bold" opacity="0.45" className="font-mono">CHILE</text>
+
+              {/* Pacific Ocean Label & Anomaly (Rendered on Desastres/Recursos Modes) */}
+              {dimension !== 'alimentaria' && (
+                <>
+                  <rect x="5" y="180" width="105" height="150" fill="#082f49" fillOpacity="0.1" rx="5" />
+                  <text x="15" y="210" fill="#f43f5e" fontSize="9" fontWeight="bold" opacity="0.9" className="font-mono">
+                    OCÉANO PACÍFICO
+                  </text>
+                  <text x="15" y="225" fill="#f97316" fontSize="8" fontWeight="bold" opacity="0.8" className="font-mono">
+                    Anomalía Térmica:
+                  </text>
+                  <text x="15" y="238" fill="#eab308" fontSize="10" fontWeight="extrabold" opacity="0.95" className="font-mono animate-pulse">
+                    El Niño (+2.8°C)
+                  </text>
+                  
+                  {/* Warm Ocean Current (El Niño) */}
+                  <path 
+                    d="M 15,30 C 50,110 70,220 120,330 T 200,470" 
+                    fill="none" 
+                    stroke="url(#el-nino-grad)" 
+                    strokeWidth="5" 
+                    strokeDasharray="8,8" 
+                    className="animate-dash"
+                  />
+                </>
+              )}
 
               {/* Amazon forest background region (Selva) */}
               <path 
@@ -468,56 +784,85 @@ export function MandoRiesgos() {
                 CORDILLERA ANDINA
               </text>
 
-              {/* Peru boundary outline path (Schematic Radar Grid) */}
+              {/* Peru boundary outline path (Highly detailed schematic outline of borders) */}
               <path 
-                d="M 120,50 Q 85,90 90,110 T 130,170 T 170,230 T 260,340 T 310,400 T 390,450 Q 430,480 440,470 T 465,430 T 485,340 T 435,245 T 450,120 T 370,80 T 280,50 Q 185,55 120,50 Z" 
+                d="M 95,75 C 75,85 70,95 75,95 C 90,120 100,130 105,140 C 125,170 135,180 145,195 C 165,215 175,225 185,235 C 225,295 245,315 255,335 C 275,365 285,375 295,385 C 335,415 355,425 365,435 C 395,455 415,460 425,465 C 435,445 440,435 445,420 C 465,370 470,340 475,320 C 455,280 435,260 425,245 C 435,180 440,150 445,125 C 385,80 355,50 325,35 C 285,45 255,50 235,55 C 195,55 165,55 145,55 Z" 
                 fill="#1e293b" 
-                fillOpacity="0.12" 
+                fillOpacity="0.15" 
                 stroke="#475569" 
-                strokeWidth="2" 
-                opacity="0.75" 
+                strokeWidth="2.5" 
+                opacity="0.9" 
               />
 
-              {/* 1. Normal Panamericana Highway vector path */}
-              <path 
-                d="M 105,105 L 135,155 L 190,220 L 260,335" 
-                fill="none" 
-                stroke={landslideSimulated ? "#f43f5e" : "#06b6d4"} 
-                strokeWidth="3.5" 
-                strokeDasharray={landslideSimulated ? "4,6" : "none"} 
-                opacity={landslideSimulated ? "0.45" : "0.9"}
-                className="transition-all duration-500"
-                filter="url(#glow-cyan)"
-              />
+              {/* RENDER LOGISTICS ROADMAP PATHS (Only visible in Seguridad Alimentaria dimension) */}
+              {dimension === 'alimentaria' && (
+                <>
+                  {/* 1. Normal Panamericana Highway vector path */}
+                  <path 
+                    d="M 95,105 L 115,145 L 165,195 L 180,235 L 250,325" 
+                    fill="none" 
+                    stroke={landslideSimulated ? "#f43f5e" : "#10b981"} 
+                    strokeWidth="3.5" 
+                    strokeDasharray={landslideSimulated ? "4,6" : "none"} 
+                    opacity={landslideSimulated ? "0.45" : "0.9"}
+                    className="transition-all duration-500"
+                    filter="url(#glow-cyan)"
+                  />
 
-              {/* 2. pgRouting Bypass Route (Sierra bypass) */}
-              <path 
-                d="M 190,220 L 225,230 L 255,300 L 260,335" 
-                fill="none" 
-                stroke="#22d3ee" 
-                strokeWidth={landslideSimulated ? "3.5" : "1.5"} 
-                strokeDasharray={landslideSimulated ? "none" : "3,6"} 
-                opacity={landslideSimulated ? "0.95" : "0.2"}
-                className="transition-all duration-500"
-                filter={landslideSimulated ? "url(#glow-cyan)" : "none"}
-              />
+                  {/* 2. pgRouting Bypass Route (Sierra bypass) */}
+                  <path 
+                    d="M 165,195 L 200,220 L 235,290 L 250,325" 
+                    fill="none" 
+                    stroke="#22d3ee" 
+                    strokeWidth={landslideSimulated ? "3.5" : "1.5"} 
+                    strokeDasharray={landslideSimulated ? "none" : "3,6"} 
+                    opacity={landslideSimulated ? "0.95" : "0.2"}
+                    className="transition-all duration-500"
+                    filter={landslideSimulated ? "url(#glow-cyan)" : "none"}
+                  />
 
-              {/* Route label badges */}
-              <text x="145" y="210" fill="#f43f5e" fontSize="9" fontWeight="bold" opacity={landslideSimulated ? 0.95 : 0.3} className="font-mono">
-                Panamericana (Cortada)
-              </text>
-              <text x="240" y="225" fill="#22d3ee" fontSize="8" fontWeight="bold" opacity={landslideSimulated ? 0.95 : 0.2} className="font-mono animate-pulse">
-                Bypass pgRouting (Huaraz/Canta)
-              </text>
+                  {/* Route labels */}
+                  <text x="135" y="180" fill="#f43f5e" fontSize="9" fontWeight="bold" opacity={landslideSimulated ? 0.95 : 0.3} className="font-mono">
+                    {landslideSimulated ? "Panamericana (Bloqueada)" : "Panamericana Norte"}
+                  </text>
+                  <text x="215" y="255" fill="#22d3ee" fontSize="8" fontWeight="bold" opacity={landslideSimulated ? 0.95 : 0.2} className="font-mono animate-pulse">
+                    Bypass pgRouting (Sierra)
+                  </text>
+                </>
+              )}
 
-              {/* 3. Render vector nodes with alert overlays and type symbols */}
+              {/* RENDER HYDROLOGICAL VECTORS (Only visible in Hidrología & Reservas dimension) */}
+              {dimension === 'recursos' && (
+                <>
+                  {/* Poechos Reservoir Oval shape near Piura */}
+                  <ellipse cx="95" cy="95" rx="12" ry="7" fill="#06b6d4" fillOpacity="0.4" stroke="#22d3ee" strokeWidth="1.5" />
+                  <text x="70" y="82" fill="#22d3ee" fontSize="8" fontWeight="bold" className="font-mono">Poechos</text>
+
+                  {/* Lake Titicaca Oval shape near Puno */}
+                  <ellipse cx="405" cy="405" rx="14" ry="9" fill="#06b6d4" fillOpacity="0.4" stroke="#22d3ee" strokeWidth="1.5" />
+                  <text x="410" y="392" fill="#22d3ee" fontSize="8" fontWeight="bold" className="font-mono">Titicaca</text>
+
+                  {/* Amazon River winding path near Iquitos */}
+                  <path d="M 280,75 Q 310,95 340,110 T 430,130" fill="none" stroke="#0284c7" strokeWidth="4" opacity="0.6" />
+                  <text x="320" y="90" fill="#0284c7" fontSize="8" fontWeight="bold" className="font-mono" transform="rotate(10, 320, 90)">Río Amazonas</text>
+                </>
+              )}
+
+              {/* 3. Render dynamic vector nodes with alert overlays and type symbols */}
               {mapPoints.map((pt) => {
                 const isSelected = activePoint === pt.id;
                 let color = '#94a3b8'; // gray
 
-                if (pt.type === 'cultivo') color = '#10b981'; // emerald
-                else if (pt.type === 'hidrologia') color = '#3b82f6'; // blue
-                else if (pt.type === 'desvío') color = landslideSimulated ? '#22d3ee' : '#475569';
+                if (pt.type === 'origen') color = '#10b981'; // emerald
+                else if (pt.type === 'hub') color = '#3b82f6'; // blue
+                else if (pt.type === 'destino') color = '#06b6d4'; // cyan
+                else if (pt.type === 'bypass_point') color = landslideSimulated ? '#22d3ee' : '#64748b';
+                else if (pt.type === 'choke_point') color = landslideSimulated ? '#ef4444' : '#10b981';
+                
+                else if (pt.type === 'reservorio' || pt.type === 'cuenca' || pt.type === 'rio' || pt.type === 'lago' || pt.type === 'acuifero') {
+                  color = '#06b6d4'; // cyan for water
+                }
+                
                 else if (pt.type === 'desastre') color = landslideSimulated ? '#ef4444' : '#f59e0b';
                 else if (pt.type === 'desastre_fuego') color = '#f43f5e';
                 else if (pt.type === 'desastre_sismo') color = '#f43f5e';
@@ -540,8 +885,8 @@ export function MandoRiesgos() {
                       </>
                     )}
 
-                    {/* Pulse rings for alerts/active routes */}
-                    {((pt.type.startsWith('desastre')) || (landslideSimulated && pt.type === 'desvío') || isSelected) && (
+                    {/* Pulse rings for active alerts/bypass/selection */}
+                    {((pt.type.startsWith('desastre')) || (pt.type === 'choke_point' && landslideSimulated) || (landslideSimulated && pt.type === 'bypass_point') || isSelected) && (
                       <circle 
                         cx={pt.x} 
                         cy={pt.y} 
@@ -567,7 +912,7 @@ export function MandoRiesgos() {
                     {/* Small white dot inside */}
                     <circle cx={pt.x} cy={pt.y} r="2.5" fill="#ffffff" />
 
-                    {/* Dynamic Graphic Icon Overlay representation */}
+                    {/* Alert specific icons overlay */}
                     {pt.type === 'desastre_fuego' && (
                       <path d={`M ${pt.x - 3} ${pt.y - 12} L ${pt.x + 3} ${pt.y - 12} L ${pt.x} ${pt.y - 17} Z`} fill="#ef4444" className="animate-bounce" />
                     )}
@@ -592,20 +937,28 @@ export function MandoRiesgos() {
             {/* Map floating prompt */}
             {!activePoint && (
               <div className="absolute bottom-4 left-4 right-4 text-center p-2.5 bg-slate-900/95 border border-slate-800 rounded-lg text-[10px] text-slate-400 font-mono shadow-xl animate-fade-in pointer-events-none z-10">
-                🖱️ Haz clic sobre cualquier nodo, alerta o desastre del mapa de Perú para consultar telemetría e impactos.
+                {dimension === 'alimentaria' 
+                  ? '🌾 Haz clic sobre los fundos u origen del mapa para trazar el bypass logístico rural.'
+                  : dimension === 'recursos'
+                  ? '💧 Selecciona un reservorio o cuenca fluvial para inspeccionar balances hídricos Richards PDE.'
+                  : '🖱️ Haz clic sobre cualquier alerta o desastre del mapa de Perú para consultar telemetría e impactos.'
+                }
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Column: Dynamic microclimate data, alerts and routes details */}
+        {/* Right Column: Dynamic details side panel */}
         <div className="xl:col-span-1 space-y-4 flex flex-col justify-between max-h-[620px] overflow-y-auto">
           <div className="space-y-4 flex-1">
             <div className="glass-panel border border-slate-700/50 rounded-xl p-5 bg-[#0b0f19]/70 space-y-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
               
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-800">
-                {selectedPoint ? "Detalles de Alerta y Telemetría" : "Análisis Climatológico Integrado"}
+                {selectedPoint 
+                  ? (dimension === 'alimentaria' ? "Logística e Itinerario de Carga" : dimension === 'recursos' ? "Balances de Cuenca Hídrica" : "Detalles de Alerta y Telemetría")
+                  : "Análisis Territorial Integrado"
+                }
               </h3>
 
               {selectedPoint ? (
@@ -622,14 +975,14 @@ export function MandoRiesgos() {
 
                   <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-mono">
                     <div className="bg-slate-950 p-2 rounded border border-slate-850">
-                      <span className="text-slate-500 block uppercase text-[8px]">Temp. Local</span>
+                      <span className="text-slate-500 block uppercase text-[8px]">{dimension === 'recursos' ? "Caudal/Temp" : "Temp. Local"}</span>
                       <span className="text-slate-200 font-bold block mt-1 flex items-center justify-center">
                         <Thermometer className="w-3 h-3 text-rose-400 mr-1" />
                         {selectedPoint.temp}
                       </span>
                     </div>
                     <div className="bg-slate-950 p-2 rounded border border-slate-850">
-                      <span className="text-slate-500 block uppercase text-[8px]">Humedad H.</span>
+                      <span className="text-slate-500 block uppercase text-[8px]">{dimension === 'recursos' ? "Capacidad" : "Humedad H."}</span>
                       <span className="text-slate-200 font-bold block mt-1 flex items-center justify-center">
                         <CloudRain className="w-3 h-3 text-blue-400 mr-1" />
                         {selectedPoint.humidity}
@@ -638,7 +991,7 @@ export function MandoRiesgos() {
                   </div>
 
                   <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 text-[10px] text-slate-450 leading-relaxed font-mono">
-                    <span className="font-bold text-slate-300 block mb-1">Métricas Geoespaciales:</span>
+                    <span className="font-bold text-slate-300 block mb-1">Métricas de Control:</span>
                     {selectedPoint.details}
                   </div>
 
@@ -646,38 +999,72 @@ export function MandoRiesgos() {
                     onClick={() => setActivePoint(null)}
                     className="w-full py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[10px] rounded font-bold text-slate-300 transition-colors"
                   >
-                    Cerrar Detalles del Nodo
+                    Cerrar Detalles
                   </button>
                 </div>
               ) : (
                 <div className="space-y-3.5 text-xs text-slate-400 leading-relaxed">
-                  <p>
-                    GeoTERRA integra teledetección espectral de Sentinel-2 con sensores IoT a triple nivel para modelar la biosfera y tejer rutas de desvío ante desastres.
-                  </p>
+                  {dimension === 'alimentaria' ? (
+                    <>
+                      <div className="flex justify-between items-center font-bold text-slate-200">
+                        <span>Canal de Ruta SAT-Agro Pro</span>
+                        <InfoTooltip text="El planificador logístico de GeoTERRA está diseñado para predecir colapsos y desviar de forma proactiva la carga hacia la sierra. Las bajas temperaturas del Callejón de Huaylas actúan como refrigeración natural pasiva." />
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Optimización de itinerarios fríos ante bloqueos geológicos.
+                      </p>
+                      
+                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-850 text-[9px] text-slate-500 leading-normal flex items-start justify-between">
+                        <span className="flex items-start space-x-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-450 shrink-0 mt-0.5" />
+                          <span>
+                            <strong>Ruteo Inteligente</strong> pgRouting en desvío Huaraz/Canta.
+                          </span>
+                        </span>
+                        <InfoTooltip text="Algoritmo Dijkstra multihilo en Go calcula la ruta alternativa por Canta/Huaraz en menos de 50ms, mitigando el 96% de la pérdida por descomposición térmica de los cultivos." />
+                      </div>
+                    </>
+                  ) : dimension === 'recursos' ? (
+                    <>
+                      <div className="flex justify-between items-center font-bold text-slate-200">
+                        <span>Soporte O.M.N.I. TERRA</span>
+                        <InfoTooltip text="O.M.N.I. TERRA calcula en milisegundos las tasas de infiltración edafológica (Green-Ampt) y transporte de humedad (Richards) a nivel nacional." />
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Infiltración edafológica y balance hídrico continuo.
+                      </p>
 
-                  <div className="space-y-2 font-mono text-[10px]">
-                    <div className="flex justify-between border-b border-slate-850 pb-1">
-                      <span className="text-slate-500">Heladas en Altiplano</span>
-                      <span className="text-rose-400 font-bold flex items-center"><Thermometer className="w-3.5 h-3.5 mr-1 text-cyan-400" /> Extremo (-12°C)</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-850 pb-1">
-                      <span className="text-slate-500">Desborde Loreto</span>
-                      <span className="text-rose-400 font-bold">Activo (+3.2m)</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-850 pb-1">
-                      <span className="text-slate-500">Precipitación Casma</span>
-                      <span className={cn("font-bold", landslideSimulated ? "text-rose-400 animate-pulse" : "text-slate-350")}>
-                        {landslideSimulated ? "48.5 mm/d" : "12.4 mm/d"}
-                      </span>
-                    </div>
-                  </div>
+                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-850 text-[9px] text-slate-500 leading-normal flex items-start justify-between">
+                        <span className="flex items-start space-x-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                          <span>
+                            <strong>Inteligencia Hídrica</strong> Fusión Sentinel-2 y Richards PDE.
+                          </span>
+                        </span>
+                        <InfoTooltip text="Fusión de datos de reflectancia satelital Sentinel-2 (bandas infrarrojas de onda corta) con resolvedores Richards PDE para estimar salinidad, conductividad eléctrica y tasas de lixiviación óptimas." />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between items-center font-bold text-slate-200">
+                        <span>Motor N.E.X.U.S. 4D</span>
+                        <InfoTooltip text="Sincronización directa en milisegundos con streams de aceleración sísmica del IGP y micro-climas del SENAMHI, mapeando vectores de evacuación en 3D." />
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Unificación PostGIS relacional de amenazas multiescala.
+                      </p>
 
-                  <div className="p-3 bg-slate-950 rounded-lg border border-slate-850 text-[9px] text-slate-500 leading-normal flex items-start space-x-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
-                    <span>
-                      <strong>Calibración Satelital:</strong> El Fenómeno de El Niño eleva la temperatura del mar en la costa norte, incrementando la vulnerabilidad a lluvias e inundaciones severas.
-                    </span>
-                  </div>
+                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-850 text-[9px] text-slate-500 leading-normal flex items-start justify-between">
+                        <span className="flex items-start space-x-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5 animate-pulse" />
+                          <span>
+                            <strong>Garantía de Resiliencia</strong> Alertas tempranas automatizadas.
+                          </span>
+                        </span>
+                        <InfoTooltip text="Modelos predictivos de deslizamiento y heladas gatillan notificaciones de Defensa Civil con hasta 48 horas de antelación vía SMS y LoRa a caseríos incomunicados." />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -703,22 +1090,38 @@ export function MandoRiesgos() {
           <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 shrink-0">
             <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center">
               <Truck className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
-              Monitoreo de Flota (Panamericana Norte)
+              {dimension === 'alimentaria' ? "Flota en Desvío de Sierra" : dimension === 'recursos' ? "Estado de Riego Agrícola" : "Flota en Tránsito Regional"}
             </h4>
-            <div className="space-y-1.5 font-mono text-[9px] text-slate-400">
-              <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
-                <span className="text-slate-300 font-bold">TRUCK-PE-01</span>
-                <span>Piura ──► Chiclayo</span>
-                <span className="text-emerald-450">75 km/h</span>
+            
+            {dimension === 'recursos' ? (
+              <div className="space-y-1.5 font-mono text-[9px] text-slate-400">
+                <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
+                  <span className="text-slate-300 font-bold">ZONA A (Piura)</span>
+                  <span>Yeso Variable: 2.4 Tn/Ha</span>
+                  <span className="text-emerald-450 font-bold">PROGRAMADO</span>
+                </div>
+                <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
+                  <span className="text-slate-300 font-bold">ZONA B (Chancay)</span>
+                  <span>Riego: 45 min de compuerta</span>
+                  <span className="text-cyan-400 font-bold">ACTIVO</span>
+                </div>
               </div>
-              <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
-                <span className="text-slate-300 font-bold">TRUCK-PE-02</span>
-                <span className={cn("transition-colors", landslideSimulated ? "text-cyan-400" : "text-slate-400")}>
-                  {landslideSimulated ? "Huaraz (Bypass)" : "Casma (Panam)"}
-                </span>
-                <span>{landslideSimulated ? "54 km/h" : "80 km/h"}</span>
+            ) : (
+              <div className="space-y-1.5 font-mono text-[9px] text-slate-400">
+                <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
+                  <span className="text-slate-300 font-bold">TRUCK-PE-01</span>
+                  <span>Piura ──► Chiclayo</span>
+                  <span className="text-emerald-450">75 km/h</span>
+                </div>
+                <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
+                  <span className="text-slate-300 font-bold">TRUCK-PE-02</span>
+                  <span className={cn("transition-colors", landslideSimulated ? "text-cyan-400 animate-pulse" : "text-slate-450")}>
+                    {landslideSimulated ? "Huaraz (Bypass)" : "Casma (Panam)"}
+                  </span>
+                  <span>{landslideSimulated ? "54 km/h" : "80 km/h"}</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
