@@ -1,0 +1,137 @@
+{
+  "name": "GeoTERRA - Ingesta de Alertas de Desastres (CENEPRED / IGP)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+      "name": "When clicking \"Execute\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        380,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "value": 5
+            }
+          ]
+        }
+      },
+      "id": "2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+      "name": "Interval Trigger (5 Minutos)",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        380,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://sigrid.cenepred.gob.pe/sigridv3/api/alertas_recientes",
+        "options": {}
+      },
+      "id": "3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f",
+      "name": "HTTP Request - IGP / CENEPRED API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        600,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mapear y normalizar la estructura de respuesta estatal al esquema SQL\nconst items = input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  // Filtrar solo alertas críticas de huaicos o inundaciones en la Costa Norte/Centro\n  if (data.region === 'Lambayeque' || data.region === 'Piura' || data.region === 'Ancash') {\n    results.push({\n      json: {\n        tipo_evento: data.tipo || 'HUAICO',\n        severidad: parseInt(data.nivel_peligro || '4'),\n        // Construir WKT Polygon centrado en latitud/longitud del evento\n        wkt_polygon: `POLYGON((` +\n          `${data.longitude - 0.05} ${data.latitude - 0.05}, ` +\n          `${data.longitude + 0.05} ${data.latitude - 0.05}, ` +\n          `${data.longitude + 0.05} ${data.latitude + 0.05}, ` +\n          `${data.longitude - 0.05} ${data.latitude + 0.05}, ` +\n          `${data.longitude - 0.05} ${data.latitude - 0.05}` +\n          `))`,\n        detalles: JSON.stringify({\n          institucion_emisora: data.entidad || 'INDICI/CENEPRED',\n          boletin_nro: data.boletin || 'N/A',\n          descripcion: data.descripcion || 'Amenaza detectada por monitoreo radar'\n        })\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "id": "4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+      "name": "Transformador de Geometría",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        820,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO alertas_desastres (tipo_evento, severidad, geom, detalles_tensor, estado)\nVALUES (\n  '{{ $json.tipo_evento }}',\n  {{ $json.severidad }},\n  ST_GeomFromText('{{ $json.wkt_polygon }}', 4326),\n  '{{ $json.detalles }}'::jsonb,\n  'ACTIVO'\n)\nON CONFLICT DO NOTHING;",
+        "additionalFields": {}
+      },
+      "id": "5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b",
+      "name": "Supabase PostGIS - Insert Alerta",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        320
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-credentials-geoterra",
+          "name": "Supabase Production DB"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute\"": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - IGP / CENEPRED API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interval Trigger (5 Minutos)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - IGP / CENEPRED API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - IGP / CENEPRED API": {
+      "main": [
+        [
+          {
+            "node": "Transformador de Geometría",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformador de Geometría": {
+      "main": [
+        [
+          {
+            "node": "Supabase PostGIS - Insert Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "f789d31d-b8d9-4822-817a-24adcb09e1e9",
+  "id": "geoterra-ingestion-flow",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
