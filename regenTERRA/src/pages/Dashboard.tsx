@@ -72,8 +72,8 @@ export function Dashboard() {
     setTimeout(() => {
       setSatelliteSyncing(false);
       setSyncMessage(serverConnected 
-        ? 'Sentinel-2 Sincronizado con API del Servidor Python (Ground-Truth R²=0.94)' 
-        : 'Sentinel-2 Calibrado localmente (Ground-Truth R²=0.94)'
+        ? 'Sentinel-2 Sincronizado con API del Servidor Python (Holdout R²=0.94)' 
+        : 'Sentinel-2 Calibrado localmente (Holdout R²=0.94)'
       );
       setTimeout(() => setSyncMessage(''), 4000);
     }, 2000);

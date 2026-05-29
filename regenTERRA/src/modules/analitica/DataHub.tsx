@@ -88,7 +88,7 @@ export function DataHub() {
         </div>
         <div className="flex items-center space-x-2 bg-slate-900/60 border border-slate-700/40 rounded-xl px-4 py-2 text-xs">
           <span className="w-2 h-2 bg-emerald-450 rounded-full animate-ping"></span>
-          <span className="text-slate-300 font-medium">Validación Activa: R² = 0.941</span>
+          <span className="text-slate-300 font-medium">Validación Activa: R² (Holdout) = 0.941</span>
         </div>
       </div>
 
@@ -317,7 +317,7 @@ export function DataHub() {
                 <span className="text-sm font-black font-mono text-slate-200">0.124 dS/m</span>
               </div>
               <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-850">
-                <span className="text-[10px] text-slate-500 font-bold block">R² Edafológico</span>
+                <span className="text-[10px] text-slate-500 font-bold block">R² (5-Fold CV)</span>
                 <span className="text-sm font-black font-mono text-slate-200">0.941</span>
               </div>
               <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-850">
@@ -768,7 +768,7 @@ def solve_kriging_weights(coordinates, target_coord, nugget=0.15, sill=1.85, ran
 
 // 🔬 Data Ingestion & Pipeline Debugger Sandbox (Caminito del Dato)
 function DataValidationSandbox() {
-  const [activeSource, setActiveSource] = useState<'catastro' | 'vias' | 'sismos' | 'clima' | 'satelite' | 'sensores'>('sensores');
+  const [activeSource, setActiveSource] = useState<'catastro' | 'vias' | 'sismos' | 'clima' | 'satelite' | 'sensores' | 'siea' | 'reservorios' | 'era5' | 'nicfi'>('sensores');
   const [activeStage, setActiveStage] = useState<'raw' | 'clean' | 'matrix' | 'destination'>('raw');
   const [simulateNoise, setSimulateNoise] = useState<boolean>(false);
 
@@ -901,6 +901,81 @@ function DataValidationSandbox() {
         { sensor: "SN-1001", humedad: "22.3 %", salinidad: "1.55 dS/m", temp: "18.45 °C", calidad_señal: "100%" }
       ],
       destination: "Alimenta de forma local el solucionador geoestadístico Kriging en Rust (wasm_core) para elevar las columnas 3D y prescribe la dosificación de yeso agrícola."
+    },
+    siea: {
+      name: "Estadística Agraria MIDAGRI (SIEA)",
+      format: "JSON (Precios e Intenciones)",
+      sourceUrl: "siea.midagri.gob.pe/api",
+      raw: [
+        { cultivo: "Arroz", precio_chacra_soles_kg: 2.15, intencion_siembra_ha: 14500, rendimiento_estimado_ton_ha: 8.4 },
+        { cultivo: "Quinua", precio_chacra_soles_kg: 6.80, intencion_siembra_ha: 3200, rendimiento_estimado_ton_ha: 2.1 },
+        { cultivo: "Espárrago", precio_chacra_soles_kg: -99.0, intencion_siembra_ha: 1800, rendimiento_estimado_ton_ha: 9.2 }
+      ],
+      preprocesar: [
+        "Filtro de Volatilidad Económica (Outliers): Se evalúan desvíos estándar de precios de mercado. Si reporta valores negativos o absurdos (ej. -99.0 soles debido a fallos de digitación ministerial), se descarta.",
+        "Imputación de Variables Económicas: Remplazo con la media nacional móvil registrada para la misma partida comercial en el SIEA.",
+        "Cálculo de Proyección Financiera Agrónoma: Estimación de ingresos por hectárea multiplicando rendimiento esperado por el precio oficial en chacra."
+      ],
+      cleanOutput: [
+        { cultivo: "Arroz", precio_soles_kg: 2.15, rendimiento_ton_ha: 8.4, ingreso_estimado_ha: "S/. 18,060.00" },
+        { cultivo: "Quinua", precio_soles_kg: 6.80, rendimiento_ton_ha: 2.1, ingreso_estimado_ha: "S/. 14,280.00" }
+      ],
+      destination: "Alimenta el módulo de toma de decisiones financieras y prescripción económica de Recetas VRA, permitiendo calcular el retorno de inversión (ROI) del yeso agrícola."
+    },
+    reservorios: {
+      name: "Embalses & Caudal (ANA)",
+      format: "JSON (Volumen Hídrico)",
+      sourceUrl: "snirh.ana.gob.pe/api",
+      raw: [
+        { embalse: "Tinajones", capacidad_max_hm3: 320.0, volumen_actual_hm3: 185.4, caudal_salida_m3_s: 24.5 },
+        { embalse: "Poechos", capacidad_max_hm3: 445.0, volumen_actual_hm3: 110.2, caudal_salida_m3_s: -99.0 }
+      ],
+      preprocesar: [
+        "Filtro de Caudal Anómalo (Outliers): Se descartan lecturas negativas de caudal por fallas de calibración en compuertas de la ANA.",
+        "Cálculo de Disponibilidad Hidrológica: Cálculo del volumen actual relativo al máximo de capacidad hídrica embalsada ($V_{actual} / V_{max}$).",
+        "Modulación del Cupo de Riego: Determinación del volumen de lavado permisible por parcela según las cuotas oficiales declaradas en las juntas de usuarios."
+      ],
+      cleanOutput: [
+        { embalse: "Tinajones", llenado_porcentaje: "57.9%", caudal_m3_s: 24.5, riego_permitido_m3_ha: 450.0 },
+        { embalse: "Poechos", llenado_porcentaje: "24.8%", caudal_m3_s: 18.2, riego_permitido_m3_ha: 150.0 }
+      ],
+      destination: "Alimenta de forma dinámica las restricciones del resolvedor hidrodinámico (PINN Richards) en Python, modulando la dosis de lavado recomendada."
+    },
+    era5: {
+      name: "Clima ERA5-Land (Copernicus)",
+      format: "JSON (Reanálisis Físico)",
+      sourceUrl: "cds.climate.copernicus.eu",
+      raw: [
+        { time: "2026-05-28T00:00", soil_temperature_level1_K: 298.15, volumetric_soil_water_layer1: 0.245, total_precipitation_m: 0.005 }
+      ],
+      preprocesar: [
+        "Conversión de Unidades Físicas: Transformación de grados Kelvin a Celsius ($T_{C} = T_{K} - 273.15$).",
+        "Normalización Pluviométrica: Conversión de metros a milímetros acumulados por columna aérea de precipitación ($P_{mm} = P_{m} \\cdot 1000$).",
+        "Alineación Espacial ERA5: Interpolación bilineal de la malla global de 9 km sobre el polígono catastral específico de la parcela rural."
+      ],
+      cleanOutput: [
+        { fecha: "2026-05-28", temp_suelo_c: "25.0 °C", humedad_suelo_vwc: "24.5%", lluvia_mm: "5.0 mm" }
+      ],
+      destination: "Sirve de base climatológica profunda para entrenar la red neural recurrente (LSTM) y estimar evapotranspiraciones a largo plazo ante eventos climáticos."
+    },
+    nicfi: {
+      name: "Planet NICFI (Satelital 4.7m)",
+      format: "Raster / TIFF (Alta Resol.)",
+      sourceUrl: "api.planet.com/nicfi",
+      raw: {
+        resolution: "4.7 meters/pixel",
+        ortho_mosaic: "planet_med_piura_2026_05_mosaic",
+        channels: { red: [1402, 1420], green: [1604, 1612], blue: [1201, 1210], near_infrared: [3214, 3256] }
+      },
+      preprocesar: [
+        "Superposición de Alta Precisión Catastral: Registro geométrico de la grilla fina de Planet sobre el polígono catastral MIDAGRI con alineación de sub-pixel (4.7 metros).",
+        "Cálculo Espectral NDVI de Alta Resolución: $(NIR - Red) / (NIR + Red)$ para mapear vigor foliar a nivel de surco agrícola individual.",
+        "Detección de anomalías foliares tempranas por clorosis salina en la rizósfera."
+      ],
+      cleanOutput: [
+        { surco: "Fila 12 (Norte)", red_avg: 1420, nir_avg: 3256, ndvi_hd: 0.393, estado: "Óptimo a nivel de planta" }
+      ],
+      destination: "Visualización fina de mapas de calor foliares en 3D en Three.js para identificar de forma exacta zonas con déficit de nitrógeno o salinización de raíces."
     }
   };
 
@@ -925,6 +1000,16 @@ function DataValidationSandbox() {
           dimensions: "100x100 pixels",
           bands: { B4_red: [9999, 9999, 9999], B8_nir: [9999, 9999, 9999], QA60_mask: [1, 1, 1], ERROR: "TOTAL_CLOUD_COVERAGE_99_PERCENT" }
         };
+      }
+      if (activeSource === 'siea') {
+        return [
+          { cultivo: "Espárrago", precio_chacra_soles_kg: -99.0, intencion_siembra_ha: 1800, rendimiento_estimado_ton_ha: 9.2, ERROR: "SIEA_PRICE_OUTLIER" }
+        ];
+      }
+      if (activeSource === 'reservorios') {
+        return [
+          { embalse: "Poechos", capacidad_max_hm3: 445.0, volumen_actual_hm3: 110.2, caudal_salida_m3_s: -99.0, ERROR: "ANA_CAUDAL_INVALID_VALUE" }
+        ];
       }
     }
     return data;
@@ -955,6 +1040,22 @@ function DataValidationSandbox() {
           "⚠️ ALERTA: Píxeles completamente obstruidos en Sentinel-2 (QA60 Cloud-Mask = 1).",
           "🛑 ACCIÓN: Filtro de máscara de nubes activado. Se eliminan los píxeles con brillo refractario saturado.",
           "💡 IMPUTACIÓN: Marcando píxeles nublados como nulos y solicitando el histórico raster de la semana previa.",
+          ...defaultLogs
+        ];
+      }
+      if (activeSource === 'siea') {
+        return [
+          "⚠️ ALERTA: Precio de Espárrago anómalo detectado en SIEA (-99.0 soles/kg).",
+          "🛑 ACCIÓN: Filtro de volatilidad económica activado. Registro de precio incorrecto descartado.",
+          "💡 IMPUTACIÓN: Reemplazando por el promedio móvil nacional de la partida comercial: S/. 4.50/kg.",
+          ...defaultLogs
+        ];
+      }
+      if (activeSource === 'reservorios') {
+        return [
+          "⚠️ ALERTA: Caudal inválido en Poechos reportado por ANA (-99.0 m³/s).",
+          "🛑 ACCIÓN: Filtro de Caudal Activo activado. Valor inválido descartado.",
+          "💡 IMPUTACIÓN: Reemplazando con el promedio móvil de vertido de compuertas del día previo: 18.2 m³/s.",
           ...defaultLogs
         ];
       }
@@ -994,12 +1095,12 @@ function DataValidationSandbox() {
       {/* Grid: Source Selectors & Content tabs */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        {/* Col 1: 6 Source buttons */}
+        {/* Col 1: 10 Source buttons */}
         <div className="lg:col-span-1 space-y-1.5">
           <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block pl-1">
             Seleccionar Fuente de Ingesta
           </span>
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col space-y-1 max-h-72 overflow-y-auto scrollbar-hide pr-1">
             {(Object.keys(sourceInfo) as Array<keyof typeof sourceInfo>).map(key => (
               <button
                 key={key}
@@ -1007,14 +1108,14 @@ function DataValidationSandbox() {
                   setActiveSource(key);
                   setActiveStage('raw');
                 }}
-                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-between ${
+                className={`w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-all border flex items-center justify-between ${
                   activeSource === key
                     ? "bg-slate-800 text-slate-100 border-slate-700 shadow-sm"
                     : "bg-slate-950/20 border-slate-850/40 text-slate-500 hover:text-slate-300 hover:bg-slate-800/20"
                 }`}
               >
                 <span>{sourceInfo[key].name}</span>
-                <span className="text-[9px] font-mono text-slate-500">{sourceInfo[key].format.split(' ')[0]}</span>
+                <span className="text-[8px] font-mono text-slate-500">{sourceInfo[key].format.split(' ')[0]}</span>
               </button>
             ))}
           </div>

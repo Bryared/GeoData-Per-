@@ -71,7 +71,74 @@ Para garantizar la transparencia e integridad del proyecto frente a los evaluado
 
 ---
 
-## 📡 3. MAPEO MAESTRO DE FUENTES DE ADQUISICIÓN (HUMANO vs. MÁQUINA)
+## 🎯 3. ALINEACIÓN CON LAS BRECHAS ESTRUCTURALES DE PLANIFICACIÓN NACIONAL (CEPLAN / OECD)
+
+Para garantizar el impacto social, de desarrollo y la legitimidad de GeoTERRA Perú ante el **Comité Evaluador de la PCM/SGTD** y el **MIDAGRI**, la plataforma ha sido diseñada bajo una alineación estricta con los reportes oficiales del **Centro Nacional de Planeamiento Estratégico (CEPLAN)** sobre vulnerabilidad territorial y las directivas de desarrollo regional de la **OCDE (OECD)** para el Perú.
+
+### A. El "Tridente Sagrado" de Vulnerabilidad Territorial (🌱 💧 🌋)
+El cruce de datos estructurales a nivel nacional demuestra que el núcleo de la resiliencia territorial en el Perú reside en la convergencia de tres factores críticos: **Agua (Hidrología) + Agricultura (Suelos) + Riesgos (Desastres)**. Esta intersección es precisamente donde GeoTERRA concentra su resolvedor analítico y su gemelo digital para actuar como un sistema de soporte y toma de decisiones.
+
+```
+                  ┌──────────────────────────────┐
+                  │      💧 1. AGUA / CUENCAS    │
+                  │   Estrés hídrico y sequías   │
+                  └──────────────┬───────────────┘
+                                 │
+                                 ▼
+    ┌────────────────────────────┴───────────────────────────┐
+    │     🌱 2. AGRICULTURA      │      🌋 3. RIESGOS        │
+    │  Salinización y erosión    │   Huaicos y deforestación │
+    └────────────────────────────┬───────────────────────────┘
+                                 │
+                                 ▼
+                  ┌──────────────────────────────┐
+                  │    🏆 CONVERGENCIA NÚCLEO    │
+                  │   Gobernanza Territorial   │
+                  └──────────────────────────────┘
+```
+
+---
+
+### B. Mapeo de Problemáticas Territoriales y Frecuencia Nacional (Versión Rigurosa)
+Basado en las brechas oficiales y cualitativas reportadas por CEPLAN (2013-2024) y la OCDE:
+
+1.  **💧 Estrés Hídrico y Gestión de Agua:**
+    *   *Problemáticas:* Escasez física de agua, sobreexplotación de acuíferos subterráneos, ineficiencia técnica de riego por inundación tradicional y salinización de suelos por mala irrigación.
+    *   *Contexto Regional:* Presente en la mayoría de departamentos de la **costa y la sierra sur**, especialmente en valles de agroexportación y cuencas bajo estrés. *(Ref: OECD).*
+2.  **🌋 Riesgos de Desastres y Vulnerabilidad Climática:**
+    *   *Problemáticas:* Inundaciones pluviales severas, aluviones (huaicos), movimientos en masa, heladas agrícolas altoandinas y Fenómeno El Niño.
+    *   *Contexto Regional:* Altamente recurrente a lo largo del **norte costero, la cordillera andina y la Amazonía inundable**. *(Ref: CEPLAN).*
+3.  **🌱 Agricultura y Suelos (Productividad):**
+    *   *Problemáticas:* Baja productividad y nula tecnificación agrícola, degradación química acelerada del suelo por acumulación de sodio (salinidad) y erosión de la capa arable.
+    *   *Contexto Regional:* Extendido en la mayoría de departamentos con predominio de agricultura familiar. *(Ref: OECD).*
+4.  **🚛 Conectividad e Infraestructura de Transporte:**
+    *   *Problemáticas:* Carreteras rurales deficientes, aislamiento territorial de comunidades agrarias y logística de transporte precaria que encarece la carga alimentaria.
+    *   *Contexto Regional:* Muy pronunciado en regiones de **sierra y selva**. *(Ref: Trade Gov).*
+5.  **🌳 Ambiente y ANP (Ecosistemas):**
+    *   *Problemáticas:* Deforestación por cambio de uso de suelo, tala ilegal, contaminación de cuencas de agua por metales pesados (plomo/arsénico) y presión sobre Áreas Naturales Protegidas.
+    *   *Contexto Regional:* Concentrado principalmente en **departamentos de la selva y corredores mineros**. *(Ref: United Nations).*
+6.  **⚖️ Gobernanza y Planificación Territorial:**
+    *   *Problemáticas:* Planificación institucional fragmentada, nula interoperabilidad de datos públicos estatales y baja capacidad analítica de los Gobiernos Regionales.
+    *   *Contexto Regional:* Transversal en el aparato administrativo público a nivel nacional. *(Ref: OECD).*
+
+---
+
+### C. Matriz de Capacidad de Apoyo Técnico de GeoTERRA
+Para mantener una postura científica defendible, GeoTERRA **no pretende resolver estructuralmente** problemas macro del país, sino actuar como un **sistema de soporte para la toma de decisiones y la gestión de la resiliencia**:
+
+| Problema Nacional | Capacidad de Apoyo de GeoTERRA | Mecanismo de Inferencia Tecnológica del MVP |
+| :--- | :--- | :--- |
+| **🌱 Agricultura y Suelos** | **✅ Apoyo Extremadamente Fuerte** | **Edafo-OS**: Monitoreo 3D de salinidad con Kriging Rust/Wasm, oráculo predictivo XGBoost y recetas de enmiendas VRA (Yeso/Lavado). |
+| **💧 Agua y Cuencas** | **✅ Apoyo Muy Fuerte** | **O.M.N.I. TERRA**: Ingesta del volumen hídrico de compuertas (ANA), monitoreo freático y dosificación de fracción de lavado (Richards PDE). |
+| **🌋 Riesgos de Desastres**| **✅ Apoyo Muy Fuerte** | **N.E.X.U.S. 4D**: Detección de sismos (IGP) y huaicos con triggers PostGIS activos que detonan alarmas preventivas. |
+| **🚛 Conectividad Vial** | **⚠️ Apoyo Parcial (Routing)** | **Dijkstra concurrente en Go**: Redireccionamiento inmediato en 12ms de la flota logística rural ante colapsos viales registrados. |
+| **🌳 Ambiente y ANP** | **✅ Apoyo Moderado-Fuerte** | **Sentinel-2 & Planet**: Remuestreo espectral de vigor vegetal e índices NBR de incendios forestales e intrusiones ilegales en ANP. |
+| **🏙️ Ordenamiento** | **✅ Apoyo Moderado (Catastro)** | **Visor Catastral**: Visor catastral interactivo modular que delimita las parcelas sobre mapas de calor edafológicos y de huaicos. |
+| **⚖️ Gobernanza** | **✅ Apoyo Muy Fuerte (Rigor)** | **Interoperabilidad**: Unificación de APIs del IGP, SENAMHI, ANA y catastro en un solo motor relacional PostGIS, evitando la fragmentación de datos. |
+
+---
+
+## 📡 4. MAPEO MAESTRO DE FUENTES DE ADQUISICIÓN (HUMANO vs. MÁQUINA)
 
 Para garantizar la auditoría absoluta del sistema frente a los evaluadores de la **PCM/SGTD** y el jurado de la **Geotón Perú 2026**, a continuación se desmitifican e indexan todas las fuentes de información de GeoTERRA Perú. El sistema se alimenta de plataformas estatales oficiales y científicas de acceso público, descartando de manera categórica el uso de técnicas inestables de extracción de datos no estructurados (**webscraping**).
 

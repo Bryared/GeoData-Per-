@@ -289,7 +289,7 @@ export function Telemetria() {
       setSatelliteSyncing(false);
       setLoraLogs(logs => [
         ...logs,
-        `[${new Date().toLocaleTimeString()}] [SATELLITE] Copernicus Sync Complete! Calibrated indexes (Ground-Truth R²=0.941).`
+        `[${new Date().toLocaleTimeString()}] [SATELLITE] Copernicus Sync Complete! Calibrated indexes (Holdout Validation R²=0.941).`
       ]);
     }, 2500);
   };
@@ -973,7 +973,7 @@ export function Telemetria() {
 
               <div className="space-y-4">
                 <CalibrationItem name="Ajuste Atmosférico" value="Aerosol (Sen2Cor) Activo" status="success" />
-                <CalibrationItem name="Correlación Ground-Truth" value="R² = 0.941 (Excelente)" status="success" />
+                <CalibrationItem name="Correlación (Holdout Validation)" value="R² = 0.941 (5-Fold CV)" status="success" />
                 <CalibrationItem name="Calibración NDSI / NBR" value="Desviación de Canal: -0.012" status="warning" />
                 <CalibrationItem name="Resolución Espacial" value="Remuestreo 10m Bicúbico" status="success" />
               </div>

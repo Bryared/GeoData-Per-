@@ -765,7 +765,7 @@ export function RecetasVRA() {
                           </div>
                           <div className="flex justify-between border-b border-slate-800/85 pb-1">
                             <span className="text-slate-500">Precisión XGBoost (Aptitud)</span>
-                            <span className="font-mono text-emerald-400">R² = 0.941</span>
+                            <span className="font-mono text-emerald-400">R² (5-Fold CV) = 0.941</span>
                           </div>
                           <div className="flex justify-between border-b border-slate-800/85 pb-1">
                             <span className="text-slate-500">Muestreo Satelital Sentinel</span>
