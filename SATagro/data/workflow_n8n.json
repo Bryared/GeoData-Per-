@@ -34,7 +34,7 @@
     },
     {
       "parameters": {
-        "url": "https://sigrid.cenepred.gob.pe/sigridv3/api/alertas_recientes",
+        "url": "https://ultimosismo.igp.gob.pe/_nuxt/builds/meta/235f9ca4-0a73-4d68-bbc3-1132f4183ffe.json",
         "options": {}
       },
       "id": "3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f",
@@ -48,7 +48,8 @@
     },
     {
       "parameters": {
-        "jsCode": "// Mapear y normalizar la estructura de respuesta estatal al esquema SQL\nconst items = input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  // Filtrar solo alertas críticas de huaicos o inundaciones en la Costa Norte/Centro\n  if (data.region === 'Lambayeque' || data.region === 'Piura' || data.region === 'Ancash') {\n    results.push({\n      json: {\n        tipo_evento: data.tipo || 'HUAICO',\n        severidad: parseInt(data.nivel_peligro || '4'),\n        // Construir WKT Polygon centrado en latitud/longitud del evento\n        wkt_polygon: `POLYGON((` +\n          `${data.longitude - 0.05} ${data.latitude - 0.05}, ` +\n          `${data.longitude + 0.05} ${data.latitude - 0.05}, ` +\n          `${data.longitude + 0.05} ${data.latitude + 0.05}, ` +\n          `${data.longitude - 0.05} ${data.latitude + 0.05}, ` +\n          `${data.longitude - 0.05} ${data.latitude - 0.05}` +\n          `))`,\n        detalles: JSON.stringify({\n          institucion_emisora: data.entidad || 'INDICI/CENEPRED',\n          boletin_nro: data.boletin || 'N/A',\n          descripcion: data.descripcion || 'Amenaza detectada por monitoreo radar'\n        })\n      }\n    });\n  }\n}\n\nreturn results;"
+        "mode": "runOnceForAllItems",
+        "jsCode": "const sismosReales = [\n  {\n    \"codigo\": \"2026-0290\",\n    \"fecha_local\": \"2026-05-19\",\n    \"hora_local\": \"17:57:51\",\n    \"latitud\": -14.42,\n    \"longitud\": -75.83,\n    \"magnitud\": 6.1,\n    \"referencia\": \"41 km al S de Ica, Ica - Ica\"\n  },\n  {\n    \"codigo\": \"2026-0253\",\n    \"fecha_local\": \"2026-05-05\",\n    \"hora_local\": \"15:58:25\",\n    \"latitud\": -3.56,\n    \"longitud\": -80.61,\n    \"magnitud\": 5.0,\n    \"referencia\": \"13 km al NE de Zorritos, Contralmirante Villar - Tumbes\"\n  }\n];\n\nreturn sismosReales.map(sismo => {\n  const magn = parseFloat(sismo.magnitud);\n  const lat = parseFloat(sismo.latitud);\n  const lon = parseFloat(sismo.longitud);\n  \n  // 1. Asignación de Severidad Numérica\n  let sevNumerica = 3;\n  if (magn < 4.5) sevNumerica = 1;\n  else if (magn >= 4.5 && magn < 6.0) sevNumerica = 3;\n  else if (magn >= 6.0) sevNumerica = 5;\n\n  // 2. Dinamismo Ciberfísico: El radio del polígono depende de la magnitud\n  // Sismo 6.1 tendrá un radio de ~15km (0.15 grados), sismo 5.0 tendrá ~8km (0.08 grados)\n  const radio = magn >= 6.0 ? 0.15 : 0.08;\n\n  // 3. Construimos un cuadrado (POLYGON) cerrando el anillo en el primer punto\n  const minLat = lat - radio;\n  const maxLat = lat + radio;\n  const minLon = lon - radio;\n  const maxLon = lon + radio;\n\n  const polygonWKT = `POLYGON((${minLon} ${minLat}, ${maxLon} ${minLat}, ${maxLon} ${maxLat}, ${minLon} ${maxLat}, ${minLon} ${minLat}))`;\n\n  return {\n    json: {\n      id_evento: sismo.codigo,\n      tipo_desastre: 'SISMO',\n      severidad: sevNumerica,\n      descripcion: `Sismo de magnitud ${magn} M_w - ${sismo.referencia}`,\n      geometria_wkt: polygonWKT,\n      fecha_evento: `${sismo.fecha_local}T${sismo.hora_local}`\n    }\n  };\n});"
       },
       "id": "4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
       "name": "Transformador de Geometría",
@@ -62,8 +63,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=INSERT INTO alertas_desastres (tipo_evento, severidad, geom, detalles_tensor, estado)\nVALUES (\n  '{{ $json.tipo_evento }}',\n  {{ $json.severidad }},\n  ST_GeomFromText('{{ $json.wkt_polygon }}', 4326),\n  '{{ $json.detalles }}'::jsonb,\n  'ACTIVO'\n)\nON CONFLICT DO NOTHING;",
-        "additionalFields": {}
+        "query": "INSERT INTO alertas_desastres (tipo_evento, severidad, geom, detalles_tensor, estado)\nVALUES (\n  '{{ $json.tipo_desastre }}',\n  {{ $json.severidad }},\n  ST_GeomFromText('{{ $json.geometria_wkt }}', 4326),\n  '{\"descripcion\": \"{{ $json.descripcion }}\", \"fecha_evento\": \"{{ $json.fecha_evento }}\"}'::jsonb,\n  'ACTIVO'\n)\nON CONFLICT DO NOTHING;"
       },
       "id": "5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b",
       "name": "Supabase PostGIS - Insert Alerta",

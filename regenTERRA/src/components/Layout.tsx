@@ -74,6 +74,49 @@ export function Layout() {
     }
   }, [isLight]);
 
+  // Poll live alerts from backend and map to notifications dropdown
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/alerts');
+        if (response.ok) {
+          const data = await response.json();
+          // Map to notifications
+          const mapped = data.map((alert: any) => {
+            const desc = alert.detalles?.descripcion || `${alert.tipo_evento} activo con severidad ${alert.severidad} detectado.`;
+            // Calculate time difference
+            let timeStr = 'Reciente';
+            if (alert.fecha_deteccion) {
+              const diff = Date.now() - new Date(alert.fecha_deteccion).getTime();
+              const mins = Math.floor(diff / 60000);
+              if (mins < 1) timeStr = 'Hace un momento';
+              else if (mins < 60) timeStr = `Hace ${mins}m`;
+              else {
+                const hrs = Math.floor(mins / 60);
+                timeStr = `Hace ${hrs}h`;
+              }
+            }
+            return {
+              id: alert.id,
+              category: alert.tipo_evento,
+              message: desc,
+              time: timeStr,
+              type: alert.severidad >= 4 ? 'danger' : alert.severidad === 3 ? 'warning' : 'info',
+              unread: alert.estado === 'ACTIVO'
+            };
+          });
+          setNotifications(mapped);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch live alerts from server:', err);
+      }
+    };
+
+    fetchAlerts();
+    const pollInterval = setInterval(fetchAlerts, 5000);
+    return () => clearInterval(pollInterval);
+  }, []);
+
   const toggleTheme = () => {
     setIsLight(!isLight);
   };

@@ -345,6 +345,10 @@ class SatAgroAPIHandler(http.server.SimpleHTTPRequestHandler):
             self.serve_api_data()
         elif path == "/api/prescriptions":
             self.serve_api_prescriptions()
+        elif path == "/api/mock/alertas_recientes":
+            self.serve_mock_alerts()
+        elif path == "/api/alerts":
+            self.serve_live_alerts()
         else:
             # Comportamiento por defecto: servir archivos estáticos (HTML, CSS, JS)
             # Mapear la raíz a dashboard/index.html
@@ -595,6 +599,68 @@ class SatAgroAPIHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"[DB ERROR] Error al consultar prescripciones en Supabase: {e}")
             self.send_error_response(500, f"Error de base de datos de prescripciones: {str(e)}")
+
+    def serve_mock_alerts(self):
+        # Datos mockeados que emulan la respuesta oficial de la API de CENEPRED (SIGRID)
+        # filtrados para que n8n los procese y construya el WKT
+        mock_alerts = [
+            {
+                "region": "Ancash",
+                "tipo": "HUAICO",
+                "nivel_peligro": "4",
+                "longitude": -78.31,
+                "latitude": -9.47,
+                "entidad": "CENEPRED",
+                "boletin": "B-042-2026",
+                "descripcion": "Huaico crítico simulado en Casma KM 385. Obstrucción inminente de la Panamericana Norte."
+            }
+        ]
+        self.send_json_response(200, mock_alerts)
+
+    def serve_live_alerts(self):
+        if not db_client or not db_client.ensure_connected():
+            self.serve_mock_alerts()
+            return
+            
+        try:
+            query = """
+                SELECT 
+                    id, 
+                    tipo_evento, 
+                    severidad, 
+                    detalles_tensor, 
+                    fecha_deteccion, 
+                    estado,
+                    ST_AsGeoJSON(geom) as geom_json
+                FROM alertas_desastres
+                ORDER BY fecha_deteccion DESC
+                LIMIT 20;
+            """
+            alerts = db_client.fetchall(query)
+            
+            formatted_alerts = []
+            for a in alerts:
+                # Convert detalles_tensor from JSON string to dict if needed, or if it is already dict
+                detalles = a["detalles_tensor"]
+                if isinstance(detalles, str):
+                    try:
+                        detalles = json.loads(detalles)
+                    except:
+                        pass
+                
+                formatted_alerts.append({
+                    "id": str(a["id"]),
+                    "tipo_evento": a["tipo_evento"],
+                    "severidad": a["severidad"],
+                    "detalles": detalles,
+                    "fecha_deteccion": a["fecha_deteccion"].isoformat() if a["fecha_deteccion"] else None,
+                    "estado": a["estado"],
+                    "geom": json.loads(a["geom_json"]) if a["geom_json"] else None
+                })
+            self.send_json_response(200, formatted_alerts)
+        except Exception as e:
+            print(f"[DB ERROR] Error al consultar alertas en Supabase: {e}")
+            self.send_error_response(500, f"Error de base de datos de alertas: {str(e)}")
 
     def handle_live_simulation(self, params):
         pid = params.get("parcel_id", 1)
