@@ -75,7 +75,7 @@ Para garantizar la transparencia e integridad del proyecto frente a los evaluado
 
 Para garantizar el impacto social, de desarrollo y la legitimidad de GeoTERRA Perú ante el **Comité Evaluador de la PCM/SGTD** y el **MIDAGRI**, la plataforma ha sido diseñada bajo una alineación estricta con los reportes oficiales del **Centro Nacional de Planeamiento Estratégico (CEPLAN)** sobre vulnerabilidad territorial y las directivas de desarrollo regional de la **OCDE (OECD)** para el Perú.
 
-### A. El "Tridente Sagrado" de Vulnerabilidad Territorial (🌱 💧 🌋)
+### A. El "Tridente Territorial Prioritario" (🌱 💧 🌋)
 El cruce de datos estructurales a nivel nacional demuestra que el núcleo de la resiliencia territorial en el Perú reside en la convergencia de tres factores críticos: **Agua (Hidrología) + Agricultura (Suelos) + Riesgos (Desastres)**. Esta intersección es precisamente donde GeoTERRA concentra su resolvedor analítico y su gemelo digital para actuar como un sistema de soporte y toma de decisiones.
 
 ```
@@ -131,7 +131,7 @@ Para mantener una postura científica defendible, GeoTERRA **no pretende resolve
 | **🌱 Agricultura y Suelos** | **✅ Apoyo Extremadamente Fuerte** | **Edafo-OS**: Monitoreo 3D de salinidad con Kriging Rust/Wasm, oráculo predictivo XGBoost y recetas de enmiendas VRA (Yeso/Lavado). |
 | **💧 Agua y Cuencas** | **✅ Apoyo Muy Fuerte** | **O.M.N.I. TERRA**: Ingesta del volumen hídrico de compuertas (ANA), monitoreo freático y dosificación de fracción de lavado (Richards PDE). |
 | **🌋 Riesgos de Desastres**| **✅ Apoyo Muy Fuerte** | **N.E.X.U.S. 4D**: Detección de sismos (IGP) y huaicos con triggers PostGIS activos que detonan alarmas preventivas. |
-| **🚛 Conectividad Vial** | **⚠️ Apoyo Parcial (Routing)** | **Dijkstra concurrente en Go**: Redireccionamiento inmediato en 12ms de la flota logística rural ante colapsos viales registrados. |
+| **🚛 Conectividad Vial** | **⚠️ Apoyo Parcial (Routing)** | **Dijkstra concurrente en Go**: Redireccionamiento ágil en milisegundos en el servidor de la flota logística rural ante colapsos viales registrados. |
 | **🌳 Ambiente y ANP** | **✅ Apoyo Moderado-Fuerte** | **Sentinel-2 & Planet**: Remuestreo espectral de vigor vegetal e índices NBR de incendios forestales e intrusiones ilegales en ANP. |
 | **🏙️ Ordenamiento** | **✅ Apoyo Moderado (Catastro)** | **Visor Catastral**: Visor catastral interactivo modular que delimita las parcelas sobre mapas de calor edafológicos y de huaicos. |
 | **⚖️ Gobernanza** | **✅ Apoyo Muy Fuerte (Rigor)** | **Interoperabilidad**: Unificación de APIs del IGP, SENAMHI, ANA y catastro en un solo motor relacional PostGIS, evitando la fragmentación de datos. |
