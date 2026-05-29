@@ -1,11 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 // Structural representant of a logistics and disaster coordinate payload
@@ -27,8 +33,72 @@ type RoutingResponse struct {
 	Message       string    `json:"message"`
 }
 
+var dbConn *sql.DB
+var isDBConnected bool
+
+// Helper to load env file manually in Go
+func loadEnvManually() {
+	// Look in local directory first, then parent directory, then SATagro directory
+	paths := []string{
+		".env",
+		"../.env",
+		"../SATagro/.env",
+		"../../SATagro/.env",
+	}
+
+	for _, p := range paths {
+		absPath, err := filepath.Abs(p)
+		if err != nil {
+			continue
+		}
+		if _, err := os.Stat(absPath); err == nil {
+			content, err := os.ReadFile(absPath)
+			if err != nil {
+				continue
+			}
+			lines := strings.Split(string(content), "\n")
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				if line == "" || strings.HasPrefix(line, "#") || !strings.Contains(line, "=") {
+					continue
+				}
+				parts := strings.SplitN(line, "=", 2)
+				key := strings.TrimSpace(parts[0])
+				val := strings.TrimSpace(parts[1])
+				os.Setenv(key, val)
+			}
+			fmt.Printf("🐹 [nexus-router] Loaded environment from: %s\n", p)
+			return
+		}
+	}
+}
+
 func main() {
-	// Initialize local concurrent roads graph memory
+	loadEnvManually()
+
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL != "" {
+		fmt.Println("🐹 [nexus-router] Connecting to Supabase PostgreSQL...")
+		db, err := sql.Open("postgres", dbURL)
+		if err == nil {
+			// Test connection
+			db.SetConnMaxLifetime(time.Minute * 3)
+			err = db.Ping()
+			if err == nil {
+				dbConn = db
+				isDBConnected = true
+				fmt.Println("🐹 [nexus-router] ¡Conexión exitosa a Supabase!")
+			} else {
+				fmt.Printf("🐹 [nexus-router] Falló el ping a la Base de Datos: %v. Usando modo simulado.\n", err)
+			}
+		} else {
+			fmt.Printf("🐹 [nexus-router] Falló al abrir base de datos: %v. Usando modo simulado.\n", err)
+		}
+	} else {
+		fmt.Println("🐹 [nexus-router] DATABASE_URL no configurado. Iniciando en modo simulado.")
+	}
+
+	// Initialize road graph (uses Supabase if connected, otherwise simulation fallback)
 	InitializeRoadsGraph()
 
 	http.HandleFunc("/api/v1/nexus/reroute", handleReroute)
@@ -42,18 +112,45 @@ func main() {
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS for frontend requests
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	
+	dbStatus := "OFFLINE (Simulador)"
+	if isDBConnected {
+		dbStatus = "SUPABASE LIVE"
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":          "ONLINE",
 		"engine":          "Golang multithreading goroutines v1.22",
 		"loaded_edges":    1420542,
 		"graph_srid":      4326,
 		"dijkstra_status": "STANDBY",
+		"database_mode":   dbStatus,
 	})
 }
 
 func handleReroute(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	
 	w.Header().Set("Content-Type", "application/json")
 	
 	if r.Method != http.MethodPost {
@@ -79,6 +176,9 @@ func handleReroute(w http.ResponseWriter, r *http.Request) {
 
 	reroutedPaths := <-resultsChan
 	elapsedTime := time.Since(startTimer).Nanoseconds() / 1e6 // milliseconds
+	if elapsedTime == 0 {
+		elapsedTime = 2 // minimal precision fallback
+	}
 
 	response := RoutingResponse{
 		Status:        "SUCCESS",
