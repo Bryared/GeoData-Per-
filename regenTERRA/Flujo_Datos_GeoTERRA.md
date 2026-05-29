@@ -272,8 +272,174 @@ En el archivo `lib.rs`, para optimizar el rendimiento en tiempo real en la GPU d
 
 ---
 
-## 4. Conclusión de Interoperabilidad y Valor Público
+## 🔌 6. BLUEPRINT DE CONEXIÓN HÍBRIDA: DE LA SIMULACIÓN A LA PRODUCCIÓN EN VIVO
+*(Estrategia de Conectividad para Estadinformáticos y Desarrolladores)*
 
+Para cumplir con la directiva del CTO de **construir y conectar los cables de producción real de forma paralela al simulador del MVP** (garantizando un despliegue sin fricciones en la Fase II), a continuación se presentan los **blueprints de código y esquemas de conexión física** para desacoplar el sistema del simulador e integrarlo directamente a bases de datos y brokers en vivo.
+
+---
+
+### A. Desacoplamiento del Servidor Python: Conexión Real a PostgreSQL / PostGIS
+Actualmente, `server.py` lee y escribe en `simulated_data.json`. Para migrar a la base de datos PostgreSQL de producción (Supabase / RDS), los desarrolladores deben sustituir la lectura de archivos por consultas asíncronas con la librería `asyncpg`:
+
+```python
+# SATagro/server_production.py
+import asyncpg
+import json
+
+DATABASE_URL = "postgresql://postgres:password@localhost:5432/geoterra_db"
+
+async def get_real_telemetry(parcel_id: int):
+    """
+    Obtiene la última lectura real de la tabla telemetria_iot en PostgreSQL.
+    """
+    conn = await asyncpg.connect(DATABASE_URL)
+    
+    # Consulta optimizada de series temporales reales en PostGIS
+    query = """
+        SELECT fecha, humedad_20cm, conductividad_20cm, nivel_freatico_cm 
+        FROM telemetria_iot 
+        WHERE parcel_id = $1 
+        ORDER BY fecha DESC 
+        LIMIT 1;
+    """
+    row = await conn.fetchrow(query, parcel_id)
+    await conn.close()
+    
+    if row:
+        return {
+            "fecha": row["fecha"].isoformat(),
+            "humedad_20cm": float(row["humedad_20cm"]),
+            "conductividad_20cm": float(row["conductividad_20cm"]),
+            "nivel_freatico_cm": float(row["nivel_freatico_cm"])
+        }
+    return None
+```
+
+---
+
+### B. Microservicio en Go: Carga del Grafo desde PostgreSQL en Tiempo Real
+El resolvedor Dijkstra (`nexus_router`) carga la red vial en memoria. Para no depender de datos mock, el módulo en Go utiliza el controlador `pgx` para consultar la red vial con intersección espacial activa:
+
+```go
+// nexus_router/db_connector.go
+package main
+
+import (
+	"context"
+	"github.com/jackc/pgx/v5"
+	"log"
+)
+
+type RoadEdge struct {
+	SourceID int
+	TargetID int
+	Cost     float64
+}
+
+func LoadGraphFromPostGIS(dbURL string) []RoadEdge {
+	ctx := context.Background()
+	conn, err := pgx.Connect(ctx, dbURL)
+	if err != nil {
+		log.Fatalf("Error de conexión a PostgreSQL: %v", err)
+	}
+	defer conn.Close(ctx)
+
+	// Extraer red vial activa, excluyendo segmentos bloqueados por triggers espaciales
+	query := `
+		SELECT origen_id, destino_id, longitud_km 
+		FROM red_vial_logistica 
+		WHERE estado = 'OPERATIVO';
+	`
+	rows, err := conn.Query(ctx, query)
+	if err != nil {
+		log.Fatalf("Error en consulta de red vial: %v", err)
+	}
+	defer rows.Close()
+
+	var edges []RoadEdge
+	for rows.Next() {
+		var edge RoadEdge
+		if err := rows.Scan(&edge.SourceID, &edge.TargetID, &edge.Cost); err != nil {
+			log.Println("Error escaneando arista:", err)
+			continue
+		}
+		edges = append(edges, edge)
+	}
+	return edges
+}
+```
+
+---
+
+### C. Ingesta Automática del Estado: Webhooks de n8n
+El pipeline en **n8n** se configura mediante un nodo **Webhook** que escucha las alertas del IGP. Al recibir un sismo de magnitud $\ge 4.0$, el nodo ejecuta una petición `POST` automática al endpoint de ingesta del backend de GeoTERRA para actualizar la base de datos y detonar el ruteo preventivo:
+
+```json
+// Payload enviado por n8n al endpoint de GeoTERRA (/api/v1/alerts/ingest)
+{
+  "source_api": "IGP_CENSIS_REALTIME",
+  "event_type": "SISMO",
+  "timestamp": "2026-05-28T19:35:00Z",
+  "payload": {
+    "magnitud": 5.8,
+    "profundidad_km": 28.0,
+    "latitude": -5.234,
+    "longitude": -80.612,
+    "epicentro": "Valle Chancay-Lambayeque"
+  }
+}
+```
+
+*Este JSON es parseado automáticamente por el trigger `auditar_colapso_vial()` en PostGIS, actualizando la infraestructura en microsegundos.*
+
+---
+
+### D. Puente de Telemetría IoT: Decodificador LoRaWAN / MQTT
+En la Fase II, los sensores físicos envían payloads binarios comprimidos. El siguiente script de Python actúa como puente (Bridge), suscribiéndose al broker MQTT (**Mosquitto**) en el canal de *The Things Network*, decodificando la trama binaria y escribiéndola en la base de datos de producción:
+
+```python
+# SATagro/lora_mqtt_bridge.py
+import paho.mqtt.client as mqtt
+import json
+import struct
+import requests
+
+# Configuración del Broker MQTT
+MQTT_BROKER = "eu1.thethings.network"
+MQTT_PORT = 1883
+MQTT_TOPIC = "v3/geoterra-app@ttn/devices/+/up"
+
+def on_message(client, userdata, msg):
+    """
+    Callback al recibir telemetría binaria de un nodo físico LoRaWAN.
+    """
+    payload = json.loads(msg.payload.decode('utf-8'))
+    # Obtener el payload binario en Base64 y decodificar bytes
+    raw_bytes = base64.b64decode(payload["uplink_message"]["frm_payload"])
+    
+    # Decodificar formato binario comprimido (4 bytes float humedad, 4 bytes conductividad, 4 bytes temp)
+    humedad, conductividad, temperatura = struct.unpack('!fff', raw_bytes)
+    
+    data_to_send = {
+        "sensor_id": payload["end_device_ids"]["device_id"],
+        "humedad_20cm": round(humedad, 2),
+        "conductividad_20cm": round(conductividad, 2),
+        "temp_suelo": round(temperatura, 2)
+    }
+    
+    # Enrutar payload limpio al API de producción de GeoTERRA
+    requests.post("http://localhost:8000/api/v1/telemetry/ingest", json=data_to_send)
+
+client = mqtt.Client()
+client.connect(MQTT_BROKER, MQTT_PORT, 60)
+client.subscribe(MQTT_TOPIC)
+client.loop_forever()
+```
+
+---
+
+## 7. Conclusión de Interoperabilidad y Valor Público
 
 El diseño de flujos de datos de GeoTERRA Perú demuestra que **el valor público no se genera duplicando información estatal, sino integrando y refinando datos gubernamentales abiertos**. 
 
