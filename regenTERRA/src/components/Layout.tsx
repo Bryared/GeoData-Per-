@@ -83,11 +83,12 @@ export function Layout() {
           const data = await response.json();
           // Map to notifications
           const mapped = data.map((alert: any) => {
-            const desc = alert.detalles?.descripcion || `${alert.tipo_evento} activo con severidad ${alert.severidad} detectado.`;
+            const desc = alert.detalles_tensor?.descripcion || alert.detalles?.descripcion || `${alert.tipo_evento} activo con severidad ${alert.severidad} detectado.`;
             // Calculate time difference
             let timeStr = 'Reciente';
-            if (alert.fecha_deteccion) {
-              const diff = Date.now() - new Date(alert.fecha_deteccion).getTime();
+            const baseTime = alert.detalles_tensor?.fecha_evento || alert.detalles?.fecha_evento || alert.fecha_deteccion;
+            if (baseTime) {
+              const diff = Date.now() - new Date(baseTime).getTime();
               const mins = Math.floor(diff / 60000);
               if (mins < 1) timeStr = 'Hace un momento';
               else if (mins < 60) timeStr = `Hace ${mins}m`;
