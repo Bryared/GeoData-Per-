@@ -601,18 +601,44 @@ class SatAgroAPIHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error_response(500, f"Error de base de datos de prescripciones: {str(e)}")
 
     def serve_mock_alerts(self):
-        # Datos mockeados que emulan la respuesta oficial de la API de CENEPRED (SIGRID)
-        # filtrados para que n8n los procese y construya el WKT
+        # Datos mockeados normalizados para cuando el backend está en modo demo/mock
         mock_alerts = [
             {
-                "region": "Ancash",
-                "tipo": "HUAICO",
-                "nivel_peligro": "4",
-                "longitude": -78.31,
-                "latitude": -9.47,
-                "entidad": "CENEPRED",
-                "boletin": "B-042-2026",
-                "descripcion": "Huaico crítico simulado en Casma KM 385. Obstrucción inminente de la Panamericana Norte."
+                "id": 1,
+                "tipo_evento": "HUAICO",
+                "severidad": 4,
+                "estado": "ACTIVO",
+                "lat": -9.47,
+                "lon": -78.31,
+                "geom_geojson": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                        [-78.33, -9.49],
+                        [-78.29, -9.49],
+                        [-78.29, -9.45],
+                        [-78.33, -9.45],
+                        [-78.33, -9.49]
+                    ]]
+                },
+                "detalles": {
+                    "descripcion": "Huaico crítico simulado en Casma KM 385. Obstrucción inminente de la Panamericana Norte.",
+                    "fecha_evento": datetime.now().isoformat(),
+                    "fuente": "CENEPRED"
+                }
+            },
+            {
+                "id": 2,
+                "tipo_evento": "SISMO",
+                "severidad": 5,
+                "estado": "ACTIVO",
+                "lat": -14.42,
+                "lon": -75.83,
+                "geom_geojson": None,
+                "detalles": {
+                    "descripcion": "Sismo crítico simulado de magnitud 6.1 Mw - 41 km al S de Ica.",
+                    "fecha_evento": datetime.now().isoformat(),
+                    "fuente": "IGP"
+                }
             }
         ]
         self.send_json_response(200, mock_alerts)
@@ -631,6 +657,8 @@ class SatAgroAPIHandler(http.server.SimpleHTTPRequestHandler):
                     detalles_tensor, 
                     fecha_deteccion, 
                     estado,
+                    ST_Y(ST_Centroid(geom)) as lat,
+                    ST_X(ST_Centroid(geom)) as lon,
                     ST_AsGeoJSON(geom) as geom_json
                 FROM alertas_desastres
                 ORDER BY fecha_deteccion DESC
@@ -640,22 +668,36 @@ class SatAgroAPIHandler(http.server.SimpleHTTPRequestHandler):
             
             formatted_alerts = []
             for a in alerts:
-                # Convert detalles_tensor from JSON string to dict if needed, or if it is already dict
-                detalles = a["detalles_tensor"]
-                if isinstance(detalles, str):
+                # Convert detalles_tensor from JSON string to dict if needed
+                detalles_tensor = a["detalles_tensor"]
+                if isinstance(detalles_tensor, str):
                     try:
-                        detalles = json.loads(detalles)
+                        detalles_tensor = json.loads(detalles_tensor)
                     except:
-                        pass
+                        detalles_tensor = {}
+                elif not isinstance(detalles_tensor, dict):
+                    detalles_tensor = {}
+
+                # Normalizar detalles
+                desc = detalles_tensor.get("descripcion") or detalles_tensor.get("desc") or f"{a['tipo_evento']} activo..."
+                fecha = detalles_tensor.get("fecha_evento") or (a["fecha_deteccion"].isoformat() if a["fecha_deteccion"] else None)
+                fuente = detalles_tensor.get("fuente") or detalles_tensor.get("entidad") or ("IGP" if a["tipo_evento"] == "SISMO" else "CENEPRED")
+
+                detalles_normalizados = {
+                    "descripcion": desc,
+                    "fecha_evento": fecha,
+                    "fuente": fuente
+                }
                 
                 formatted_alerts.append({
                     "id": str(a["id"]),
                     "tipo_evento": a["tipo_evento"],
                     "severidad": a["severidad"],
-                    "detalles": detalles,
-                    "fecha_deteccion": a["fecha_deteccion"].isoformat() if a["fecha_deteccion"] else None,
                     "estado": a["estado"],
-                    "geom": json.loads(a["geom_json"]) if a["geom_json"] else None
+                    "lat": float(a["lat"]) if a["lat"] is not None else None,
+                    "lon": float(a["lon"]) if a["lon"] is not None else None,
+                    "geom_geojson": json.loads(a["geom_json"]) if a["geom_json"] else None,
+                    "detalles": detalles_normalizados
                 })
             self.send_json_response(200, formatted_alerts)
         except Exception as e:
