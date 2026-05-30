@@ -207,6 +207,61 @@ export function Dashboard() {
         </div>
       )}
 
+      {/* Misión Madre y Caso Conductor */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+        <div className="glass-panel border border-emerald-500/20 p-5 rounded-2xl bg-emerald-500/5 relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
+          <div className="space-y-2">
+            <span className="text-[9px] font-black text-emerald-405 uppercase tracking-widest block font-mono">Misión Madre</span>
+            <p className="text-xs text-slate-200 font-bold leading-relaxed">
+              GeoTERRA Perú protege la continuidad agroalimentaria integrando parcelas, agua, riesgos y rutas críticas con datos oficiales del territorio.
+            </p>
+          </div>
+        </div>
+
+        <div className="glass-panel border border-slate-700/50 p-5 rounded-2xl bg-slate-900/40 relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-full blur-xl pointer-events-none" />
+          <div className="space-y-2">
+            <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest block font-mono">Caso Piloto</span>
+            <p className="text-xs text-slate-350 leading-relaxed font-light">
+              <strong>Corredor Costa Norte → Lima/Chancay</strong>: Monitoreo de arrozales en Lambayeque y recálculo logístico ante desastres en la Panamericana Norte.
+            </p>
+          </div>
+        </div>
+
+        <div className="glass-panel border border-slate-700/50 p-5 rounded-2xl bg-slate-900/40 relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
+          <div className="space-y-2">
+            <span className="text-[9px] font-black text-rose-455 uppercase tracking-widest block font-mono">Enfoque UNALM</span>
+            <p className="text-xs text-slate-350 leading-relaxed font-light">
+              <strong>Calibración Multi-Escala</strong>: Satélite Sentinel (escala regional) → Dron (alta resolución) → Campo/Laboratorio (verdad-terreno).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Línea de Decisión N.E.X.U.S. */}
+      <div className="glass-panel border border-slate-700/50 p-5 rounded-2xl bg-slate-900/20 space-y-4 animate-fade-in">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+          <Activity className="w-4 h-4 text-emerald-450 mr-2" />
+          Línea del Flujo de Decisión Operativa N.E.X.U.S.
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-center">
+          {[
+            { step: '1. Ingesta Alerta', desc: 'Sismo / Huaico detectado por IGP/CENEPRED.', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-400' },
+            { step: '2. Intersección PostGIS', desc: 'Cruce espacial de parcelas y vías en peligro.', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-400' },
+            { step: '3. Bloqueo de Ruta', desc: 'Tramo de Panamericana Norte inhabilitado en PostGIS.', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-400' },
+            { step: '4. Bypass Go Router', desc: 'Recálculo instantáneo por desvío seguro (12ms).', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-400 animate-pulse' },
+            { step: '5. Alerta y Acción', desc: 'Notificación y despacho de rutas alternativas.', color: 'border-slate-800 bg-slate-900/20 text-slate-500' }
+          ].map((item, idx) => (
+            <div key={idx} className={cn("p-3 rounded-xl border flex flex-col justify-between space-y-1.5", item.color)}>
+              <span className="font-bold text-[10px] uppercase tracking-wider">{item.step}</span>
+              <p className="text-[9px] leading-normal font-light">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Dynamic KPI Cards depending on Operational Dimension */}
       {dimension === 'alimentaria' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

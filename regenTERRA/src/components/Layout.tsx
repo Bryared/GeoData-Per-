@@ -1,18 +1,17 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Leaf, Activity, Compass, Map, ClipboardList, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, BarChart3, Sun, Moon, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Leaf, Activity, Compass, Map, ClipboardList, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, BarChart3, Sun, Moon, CheckCircle2, ShieldCheck, Database } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useDimension } from '../context/DimensionContext';
 import { useMemo, useState, useEffect } from 'react';
 
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Leaf },
-  { name: 'Telemetría', href: '/telemetry', icon: Activity },
-  { name: 'SAT-Agro Pro', href: '/satagro', icon: Compass },
-  { name: 'Mapa 3D', href: '/map', icon: Map },
-  { name: 'Mando de Riesgos', href: '/riesgos', icon: ShieldAlert },
-  { name: 'Recetas VRA', href: '/prescriptions', icon: ClipboardList },
-  { name: 'Análisis Estadístico', href: '/analytics', icon: BarChart3 },
+  { name: 'Resumen Territorial', href: '/', icon: Leaf },
+  { name: 'Riesgos y Logística', href: '/riesgos', icon: ShieldAlert },
+  { name: 'Suelos y Cultivos', href: '/cultivos', icon: Activity },
+  { name: 'Catastro Agrícola', href: '/satagro', icon: Compass },
+  { name: 'Agua y Reservas', href: '/recursos', icon: Droplet },
+  { name: 'Evidencia GEO Perú', href: '/evidencia', icon: Database },
   { name: 'Configuración', href: '/settings', icon: Settings },
   { name: 'Pitch Geotón', href: '/pitch', icon: Presentation },
 ];
@@ -20,6 +19,18 @@ const navigation = [
 export function Layout() {
   const location = useLocation();
   const { dimension, setDimension } = useDimension();
+
+  // Modo de Datos (Escenario Controlado / PostGIS Live)
+  const [dataMode, setDataMode] = useState<'controlado' | 'live'>(() => {
+    return (localStorage.getItem('geoterra_datamode') as 'controlado' | 'live') || 'controlado';
+  });
+
+  const toggleDataMode = () => {
+    const nextMode = dataMode === 'controlado' ? 'live' : 'controlado';
+    setDataMode(nextMode);
+    localStorage.setItem('geoterra_datamode', nextMode);
+    window.dispatchEvent(new Event('geoterra_datamode_changed'));
+  };
 
   // Perfil Lumínico (Theme state)
   const [isLight, setIsLight] = useState(() => {
@@ -190,7 +201,7 @@ export function Layout() {
         <div className="h-16 flex items-center px-6 border-b border-slate-700/50">
           <LogoIcon className={cn("w-6 h-6 mr-2 transition-transform duration-300 hover:rotate-12", theme.logoClass)} />
           <span className={cn("text-lg font-extrabold bg-gradient-to-r bg-clip-text text-transparent transition-all duration-300", theme.logoTextClass)}>
-            GeoTerra Perú
+            GeoTERRA Perú
           </span>
         </div>
         
@@ -297,6 +308,23 @@ export function Layout() {
           </div>
 
           <div className="flex items-center space-x-4 relative">
+            {/* Professional Data Mode Switcher */}
+            <button 
+              onClick={toggleDataMode}
+              className={cn(
+                "flex items-center space-x-2 px-3 py-1.5 border rounded-full transition-all text-xs font-bold cursor-pointer",
+                dataMode === 'live' 
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
+                  : "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
+              )}
+              title="Alternar Modo de Origen de Datos del Sistema"
+            >
+              <span className={cn("w-1.5 h-1.5 rounded-full", dataMode === 'live' ? "bg-emerald-400 animate-pulse" : "bg-amber-400")}></span>
+              <span className="text-[9px] uppercase tracking-wider font-mono">
+                {dataMode === 'live' ? 'Datos: PostGIS Live' : 'Datos: Escenario Controlado'}
+              </span>
+            </button>
+
             {/* Professional Light Mode Toggle Button */}
             <button 
               onClick={toggleTheme}
