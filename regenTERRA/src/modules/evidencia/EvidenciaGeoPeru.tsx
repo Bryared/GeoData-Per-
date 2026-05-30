@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Database, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw, Layers, Terminal } from 'lucide-react';
+import { Database, ShieldCheck, CheckCircle2, RefreshCw, Layers, Terminal } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 interface DatasetEvidencia {

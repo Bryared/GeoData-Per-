@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Telemetria } from '../edafologia/Telemetria';
 import { Map3DKriging } from '../edafologia/Map3DKriging';
 import { RecetasVRA } from '../edafologia/RecetasVRA';
-import { Activity, Map, Cpu, ClipboardList, Thermometer, Droplet, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Activity, Map, Cpu, ClipboardList, Sparkles, CheckCircle2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export function SuelosYCultivos() {

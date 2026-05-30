@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Leaf, Activity, Compass, Map, ClipboardList, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, BarChart3, Sun, Moon, CheckCircle2, ShieldCheck, Database } from 'lucide-react';
+import { Leaf, Activity, Compass, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, Sun, Moon, CheckCircle2, ShieldCheck, Database } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useDimension } from '../context/DimensionContext';
 import { useMemo, useState, useEffect } from 'react';
