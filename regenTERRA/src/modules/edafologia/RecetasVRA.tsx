@@ -339,8 +339,8 @@ export function RecetasVRA() {
           <h1 className="text-3xl font-bold text-slate-100 flex items-center">
             <ClipboardList className={cn("w-8 h-8 mr-3 animate-pulse", theme.primary)} />
             {dimension === 'alimentaria' && "Recetas VRA & Créditos de Carbono"}
-            {dimension === 'desastres' && "Prescripciones N.E.X.U.S. 4D de Mitigación"}
-            {dimension === 'recursos' && "Quelantes Hidrológicos O.M.N.I. TERRA"}
+            {dimension === 'desastres' && "Prescripciones de Mitigación — Módulo Riesgos"}
+            {dimension === 'recursos' && "Prescripciones Hídro-Químicas — Agua y Recursos"}
           </h1>
           <p className="text-slate-400 mt-1">
             {dimension === 'alimentaria' && "Prescripciones de enmiendas químicas, dosis hídricas y valorización MRV"}
@@ -358,8 +358,8 @@ export function RecetasVRA() {
             className={cn("bg-transparent border-none outline-none text-xs font-black cursor-pointer", theme.primary)}
           >
             <option value="alimentaria">Seguridad Alimentaria (Edafo-OS)</option>
-            <option value="desastres">Gestión de Desastres (N.E.X.U.S. 4D)</option>
-            <option value="recursos">Hidrología & Reservas (O.M.N.I. TERRA)</option>
+            <option value="desastres">Gestión de Desastres (Módulo Riesgos)</option>
+            <option value="recursos">Hidrología & Reservas (Módulo Hídrico)</option>
           </select>
         </div>
       </div>
@@ -616,7 +616,7 @@ export function RecetasVRA() {
                           <div className="flex items-start">
                             <Flame className="w-5 h-5 text-orange-400 mr-3 shrink-0 mt-0.5" />
                             <div>
-                              <h4 className="text-xs font-semibold text-orange-400 mb-0.5">Cortafuegos Preventivo N.E.X.U.S.</h4>
+                              <h4 className="text-xs font-semibold text-orange-400 mb-0.5">Cortafuegos Preventivo — Análisis Sentinel</h4>
                               <p className="text-xl font-bold text-slate-100">{p.firebreakWidth} <span className="text-xs font-normal text-orange-500">Metros de Ancho</span></p>
                               <p className="text-[9px] text-slate-500 mt-0.5">Dimensionado según velocidad de viento, humedad e índice Sentinel NBR</p>
                             </div>
@@ -935,7 +935,7 @@ export function RecetasVRA() {
                         <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[10px] text-rose-450 leading-relaxed space-y-1.5 animate-fade-in">
                           <p className="font-bold flex items-center">
                             <AlertCircle className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-                            [N.E.X.U.S. 4D] Alerta de Interrupción
+                            [MOTOR LOGÍSTICO] Alerta de Interrupción
                           </p>
                           <p>
                             Huaico detectado. Peso de la arista Casma cambiado a <span className="font-mono font-bold">∞</span>. pgRouting C++ ejecutado exitosamente en <span className="font-bold text-slate-200">12ms</span>.

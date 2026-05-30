@@ -68,7 +68,7 @@ export function Telemetria() {
       setLoraLogs([
         `[${new Date().toLocaleTimeString()}] [SYSTEM] GeoTERRA Perú Core initialized.`,
         `[${new Date().toLocaleTimeString()}] [LoRaWAN] Gateway active on 915.2 MHz (AS923). SF7 Spreading Factor.`,
-        `[${new Date().toLocaleTimeString()}] [CEREBRO PINN] ${connected ? 'PINN Python Solver active on port 8000' : 'Modo Autónomo Activo (Mocks locales)'}`,
+        `[${new Date().toLocaleTimeString()}] [SOLVER PINN] ${connected ? 'Python PINN Solver activo en puerto 8000' : 'Modo Autónomo Activo (Mocks locales)'}`,
         `[${new Date().toLocaleTimeString()}] [INFO] Ingesting multi-dimensional sensor streams...`
       ]);
     };
@@ -353,8 +353,8 @@ export function Telemetria() {
           <h1 className="text-3xl font-bold text-slate-100 flex items-center">
             <Activity className={cn("w-8 h-8 mr-3 animate-pulse", theme.primary)} />
             {dimension === 'alimentaria' && "Telemetría Avanzada GeoTERRA"}
-            {dimension === 'desastres' && "Telemetría de Catástrofes N.E.X.U.S. 4D"}
-            {dimension === 'recursos' && "Telemetría Hidrológica O.M.N.I. TERRA"}
+            {dimension === 'desastres' && "Telemetría de Catástrofes — Módulo Riesgos"}
+            {dimension === 'recursos' && "Telemetría Hidrológica — Agua y Recursos"}
           </h1>
           <p className="text-slate-400 mt-1">
             {dimension === 'alimentaria' && "Ingesta en tiempo real e índices satelitales calibrados - Valle del Bajo Piura"}
@@ -372,8 +372,8 @@ export function Telemetria() {
               className={cn("bg-transparent border-none outline-none text-xs font-black cursor-pointer", theme.primary)}
             >
               <option value="alimentaria">Seguridad Alimentaria (Edafo-OS)</option>
-              <option value="desastres">Gestión de Desastres (N.E.X.U.S. 4D)</option>
-              <option value="recursos">Hidrología & Reservas (O.M.N.I. TERRA)</option>
+              <option value="desastres">Gestión de Desastres (Módulo Riesgos)</option>
+              <option value="recursos">Hidrología &amp; Reservas (Módulo Hídrico)</option>
             </select>
           </div>
 

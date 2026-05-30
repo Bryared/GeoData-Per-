@@ -6,9 +6,11 @@ import { cn } from '../utils/cn';
 import { classifyDegradation, type TelemetryData } from '../utils/engine';
 import { soilAPI } from '../utils/api';
 import { useDimension } from '../context/DimensionContext';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const [climate, setClimate] = useState<'normal' | 'nino' | 'sequia'>('normal');
   const [sensors, setSensors] = useState<TelemetryData[]>([]);
   const [satelliteSyncing, setSatelliteSyncing] = useState(false);
@@ -127,14 +129,12 @@ export function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold text-slate-100 flex items-center">
             <Layers className="w-8 h-8 text-emerald-400 mr-3 animate-pulse" />
-            {dimension === 'alimentaria' && "Vista Edafológica Global"}
-            {dimension === 'desastres' && "Prevención & Gestión de Desastres"}
-            {dimension === 'recursos' && "Hidrología & Reservas Naturales"}
+            {t.dashboard.title}
           </h1>
           <p className="text-slate-400 mt-1">
-            {dimension === 'alimentaria' && "Monitoreo y Prescripción Híbrida - Sector Bajo Piura (Edafo-OS)"}
-            {dimension === 'desastres' && "Simulador de Alertas de Deforestación, Incendios, Sismos y Huaicos (N.E.X.U.S. 4D)"}
-            {dimension === 'recursos' && "Rastreo de Metales Pesados, Acuíferos e Infiltración de Agua Dulce (O.M.N.I. TERRA)"}
+            {dimension === 'alimentaria' && (language === 'qu' ? 'Mikhuy ruraymanta allpa qhaway (Suelos y Cultivos)' : 'Monitoreo y recomendación técnica de manejo - Sector Bajo Piura (Suelos y Cultivos)')}
+            {dimension === 'desastres' && (language === 'qu' ? 'Ñan hark\'aykuna hinallataq llakiykuna (Riesgos y Logística)' : 'Monitoreo de alertas territoriales, vías expuestas y rutas alternativas (Riesgos y Logística)')}
+            {dimension === 'recursos' && (language === 'qu' ? 'Yakup churaquynin hinallataq ruraynin (Agua y Recursos Hídricos)' : 'Seguimiento de disponibilidad hídrica, reservorios y condiciones de riego (Agua y Recursos Hídricos)')}
           </p>
         </div>
 
@@ -143,46 +143,60 @@ export function Dashboard() {
           
           {/* Dimension Selector (Core Vision Switcher) */}
           <div className="flex items-center space-x-2 bg-slate-800/60 border border-slate-700/80 rounded-lg px-3 py-1.5 shadow-md">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Módulo Core:</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              {language === 'qu' ? 'Core Rakiy:' : 'Módulo Core:'}
+            </span>
             <select
               value={dimension}
               onChange={(e) => setDimension(e.target.value as any)}
               className="bg-transparent border-none outline-none text-xs text-cyan-400 font-black cursor-pointer"
             >
-              <option value="alimentaria">Seguridad Alimentaria (Edafo-OS)</option>
-              <option value="desastres">Gestión de Desastres (N.E.X.U.S. 4D)</option>
-              <option value="recursos">Hidrología & Reservas (O.M.N.I. TERRA)</option>
+              <option value="alimentaria" className="bg-slate-900 text-slate-300">
+                {language === 'qu' ? 'Allpa hinallataq tarpuykuna' : 'Suelos y Cultivos'}
+              </option>
+              <option value="desastres" className="bg-slate-900 text-slate-300">
+                {language === 'qu' ? 'Sasachakuykuna hinallataq ñankuna' : 'Riesgos y Logística'}
+              </option>
+              <option value="recursos" className="bg-slate-900 text-slate-300">
+                {language === 'qu' ? 'Yaku hinallataq yaku kaqninkuna' : 'Agua y Recursos Hídricos'}
+              </option>
             </select>
           </div>
           
           {/* Global Climate Simulator dropdown */}
           <div className="flex items-center space-x-2 bg-slate-800/60 border border-slate-700/80 rounded-lg px-3 py-1.5">
-            <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Clima:</span>
+            <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">{t.dashboard.climateLabel}</span>
             <select
               value={climate}
               onChange={(e) => handleClimateChange(e.target.value as any)}
               className="bg-transparent border-none outline-none text-xs text-emerald-400 font-bold cursor-pointer"
             >
-              <option value="normal">Normal (Estable)</option>
-              <option value="nino">Fenómeno El Niño (Lluvia)</option>
-              <option value="sequia">Sequía Extrema (Evap)</option>
+              <option value="normal" className="bg-slate-900 text-slate-300">
+                {language === 'qu' ? 'Allin (Estable)' : 'Normal (Estable)'}
+              </option>
+              <option value="nino" className="bg-slate-900 text-slate-300">
+                {language === 'qu' ? 'El Niño Llausa (Para)' : 'Fenómeno El Niño (Lluvia)'}
+              </option>
+              <option value="sequia" className="bg-slate-900 text-slate-300">
+                {language === 'qu' ? 'Ch\'aki Pacha (Evap)' : 'Sequía Extrema (Evap)'}
+              </option>
             </select>
           </div>
 
           <button
             onClick={handleSatelliteSync}
             disabled={satelliteSyncing}
-            className="flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg transition-colors text-xs font-semibold disabled:opacity-50"
+            className="flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg transition-colors text-xs font-semibold disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 mr-2 ${satelliteSyncing ? 'animate-spin' : ''}`} />
-            {satelliteSyncing ? 'Sincronizando...' : 'Calibrar Satélite'}
+            {satelliteSyncing ? 'Sincronizando...' : t.dashboard.btnCalibrate}
           </button>
 
           <button
-            onClick={() => navigate('/prescriptions')}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors text-xs font-semibold shadow-lg shadow-emerald-500/20"
+            onClick={() => navigate('/cultivos')}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors text-xs font-semibold shadow-lg shadow-emerald-500/20 cursor-pointer"
           >
-            Generar Recetas VRA
+            {t.dashboard.btnRecipes}
           </button>
         </div>
       </div>
@@ -198,12 +212,12 @@ export function Dashboard() {
       {serverConnected ? (
         <div className="flex items-center space-x-3 p-3.5 bg-emerald-500/5 border border-emerald-500/10 text-emerald-400 text-xs font-semibold rounded-xl animate-fade-in">
           <Database className="w-4 h-4 text-emerald-450 animate-pulse mr-1" />
-          <span>🧬 CEREBRO ANALÍTICO PINN ACTIVO en Puerto 8000. Ecuaciones de Richards, Green-Ampt y Convección-Dispersión operando en tiempo real.</span>
+          <span>🧬 {t.dashboard.serverConnected}</span>
         </div>
       ) : (
         <div className="flex items-center space-x-3 p-3.5 bg-amber-500/5 border border-amber-500/15 text-amber-400 text-xs font-semibold rounded-xl animate-fade-in">
           <Database className="w-4 h-4 text-amber-400 mr-1" />
-          <span>⚠️ Servidor local desconectado. Corriendo en Modo Autónomo (Mocks locales). Arranca <code>server.py</code> para activar el solver de física de suelos.</span>
+          <span>⚠️ {t.dashboard.serverDisconnected}</span>
         </div>
       )}
 
@@ -212,9 +226,9 @@ export function Dashboard() {
         <div className="glass-panel border border-emerald-500/20 p-5 rounded-2xl bg-emerald-500/5 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
           <div className="space-y-2">
-            <span className="text-[9px] font-black text-emerald-405 uppercase tracking-widest block font-mono">Misión Madre</span>
+            <span className="text-[9px] font-black text-emerald-405 uppercase tracking-widest block font-mono">{t.dashboard.missionTitle}</span>
             <p className="text-xs text-slate-200 font-bold leading-relaxed">
-              GeoTERRA Perú protege la continuidad agroalimentaria integrando parcelas, agua, riesgos y rutas críticas con datos oficiales del territorio.
+              {t.dashboard.missionDesc}
             </p>
           </div>
         </div>
@@ -222,9 +236,9 @@ export function Dashboard() {
         <div className="glass-panel border border-slate-700/50 p-5 rounded-2xl bg-slate-900/40 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-full blur-xl pointer-events-none" />
           <div className="space-y-2">
-            <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest block font-mono">Caso Piloto</span>
-            <p className="text-xs text-slate-350 leading-relaxed font-light">
-              <strong>Corredor Costa Norte → Lima/Chancay</strong>: Monitoreo de arrozales en Lambayeque y recálculo logístico ante desastres en la Panamericana Norte.
+            <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest block font-mono">{t.dashboard.pilotTitle}</span>
+            <p className="text-xs text-slate-350 leading-relaxed font-light font-sans">
+              {t.dashboard.pilotDesc}
             </p>
           </div>
         </div>
@@ -232,9 +246,9 @@ export function Dashboard() {
         <div className="glass-panel border border-slate-700/50 p-5 rounded-2xl bg-slate-900/40 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
           <div className="space-y-2">
-            <span className="text-[9px] font-black text-rose-455 uppercase tracking-widest block font-mono">Enfoque UNALM</span>
+            <span className="text-[9px] font-black text-rose-455 uppercase tracking-widest block font-mono">{t.dashboard.unalmTitle}</span>
             <p className="text-xs text-slate-350 leading-relaxed font-light">
-              <strong>Calibración Multi-Escala</strong>: Satélite Sentinel (escala regional) → Dron (alta resolución) → Campo/Laboratorio (verdad-terreno).
+              {t.dashboard.unalmDesc}
             </p>
           </div>
         </div>
@@ -244,21 +258,28 @@ export function Dashboard() {
       <div className="glass-panel border border-slate-700/50 p-5 rounded-2xl bg-slate-900/20 space-y-4 animate-fade-in">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
           <Activity className="w-4 h-4 text-emerald-450 mr-2" />
-          Línea del Flujo de Decisión Operativa N.E.X.U.S.
+          {t.dashboard.decisionFlow}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-center">
-          {[
-            { step: '1. Ingesta Alerta', desc: 'Sismo / Huaico detectado por IGP/CENEPRED.', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-400' },
-            { step: '2. Intersección PostGIS', desc: 'Cruce espacial de parcelas y vías en peligro.', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-400' },
-            { step: '3. Bloqueo de Ruta', desc: 'Tramo de Panamericana Norte inhabilitado en PostGIS.', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-400' },
-            { step: '4. Bypass Go Router', desc: 'Recálculo instantáneo por desvío seguro (12ms).', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-400 animate-pulse' },
-            { step: '5. Alerta y Acción', desc: 'Notificación y despacho de rutas alternativas.', color: 'border-slate-800 bg-slate-900/20 text-slate-500' }
-          ].map((item, idx) => (
-            <div key={idx} className={cn("p-3 rounded-xl border flex flex-col justify-between space-y-1.5", item.color)}>
-              <span className="font-bold text-[10px] uppercase tracking-wider">{item.step}</span>
-              <p className="text-[9px] leading-normal font-light">{item.desc}</p>
-            </div>
-          ))}
+          {t.dashboard.decisionSteps.map((item, idx) => {
+            const isLast = idx === t.dashboard.decisionSteps.length - 1;
+            return (
+              <div 
+                key={idx} 
+                className={cn(
+                  "p-3 rounded-xl border flex flex-col justify-between space-y-1.5", 
+                  isLast 
+                    ? "border-slate-800 bg-slate-900/20 text-slate-500" 
+                    : idx === 3
+                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 animate-pulse"
+                    : "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                )}
+              >
+                <span className="font-bold text-[10px] uppercase tracking-wider">{item.step}</span>
+                <p className="text-[9px] leading-normal font-light">{item.desc}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -524,7 +545,7 @@ export function Dashboard() {
 
                 {dimension === 'desastres' && (
                   <>
-                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2">Alertas de Catástrofes N.E.X.U.S. 4D</p>
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2">Alertas de Catástrofes — Módulo Riesgos</p>
                     <div className="p-4 rounded-lg bg-rose-500/5 border border-rose-500/20 space-y-1">
                       <p className="font-semibold text-rose-400 text-xs">Alerta Aluvión/Huaico Chosica</p>
                       <p className="text-[11px] text-slate-300">Sensor de humedad de talud y sensor acústico excede umbral crítico. Despliegue automático de alerta temprana SMS.</p>
@@ -539,7 +560,7 @@ export function Dashboard() {
 
                 {dimension === 'recursos' && (
                   <>
-                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2">Ingesta de Calidad de Cuencas O.M.N.I. TERRA</p>
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2">Ingesta de Calidad de Cuencas — Módulo Hídrico</p>
                     <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20 space-y-1">
                       <p className="font-semibold text-amber-400 text-xs">Concentración Plomo Acuífero SN-Rimac-4</p>
                       <p className="text-[11px] text-slate-300">Sensor electroquímico detecta 0.045 ppm. Riesgo alto de filtración de pasivo ambiental de relaves mineros de cabecera.</p>

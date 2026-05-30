@@ -64,7 +64,7 @@ Para evitar la confusión y saturación visual del usuario, el sistema se divide
 2. **Riesgos y Logística**: ¿Qué amenaza existe y qué ruta se propone ante el bloqueo?
 3. **Suelos y Cultivos**: ¿Qué parcelas y cultivos requieren atención o recetas de remediación?
 4. **Catastro Agrícola**: ¿Dónde están delimitados los predios de los agricultores?
-5. **Agua y Reservas**: ¿Cuál es el estado de la disponibilidad hídrica en las cuencas costeras?
+5. **Agua y Recursos Hídricos**: ¿Cuál es el estado de la disponibilidad hídrica en las cuencas costeras?
 6. **Evidencia GEO Perú**: ¿Qué bases de datos oficiales del Estado respaldan técnicamente esta solución?
 
 ---

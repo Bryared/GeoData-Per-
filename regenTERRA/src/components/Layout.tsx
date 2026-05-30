@@ -1,24 +1,25 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Leaf, Activity, Compass, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, Sun, Moon, CheckCircle2, ShieldCheck, Database } from 'lucide-react';
+import { Leaf, Activity, Compass, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, Sun, Moon, CheckCircle2, ShieldCheck, Database, Languages } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useDimension } from '../context/DimensionContext';
 import { useMemo, useState, useEffect } from 'react';
-
-
-const navigation = [
-  { name: 'Resumen Territorial', href: '/', icon: Leaf },
-  { name: 'Riesgos y Logística', href: '/riesgos', icon: ShieldAlert },
-  { name: 'Suelos y Cultivos', href: '/cultivos', icon: Activity },
-  { name: 'Catastro Agrícola', href: '/satagro', icon: Compass },
-  { name: 'Agua y Reservas', href: '/recursos', icon: Droplet },
-  { name: 'Evidencia GEO Perú', href: '/evidencia', icon: Database },
-  { name: 'Configuración', href: '/settings', icon: Settings },
-  { name: 'Pitch Geotón', href: '/pitch', icon: Presentation },
-];
+import { useLanguage } from '../i18n/LanguageContext';
 
 export function Layout() {
   const location = useLocation();
   const { dimension, setDimension } = useDimension();
+  const { t, language, setLanguage } = useLanguage();
+
+  const dynamicNavigation = useMemo(() => [
+    { name: t.nav.dashboard, href: '/', icon: Leaf },
+    { name: t.nav.risks, href: '/riesgos', icon: ShieldAlert },
+    { name: t.nav.crops, href: '/cultivos', icon: Activity },
+    { name: t.nav.cadastre, href: '/satagro', icon: Compass },
+    { name: t.nav.water, href: '/recursos', icon: Droplet },
+    { name: t.nav.evidence, href: '/evidencia', icon: Database },
+    { name: t.nav.settings, href: '/settings', icon: Settings },
+    { name: t.nav.pitch, href: '/pitch', icon: Presentation },
+  ], [t]);
 
   // Modo de Datos (Escenario Controlado / PostGIS Live)
   const [dataMode, setDataMode] = useState<'controlado' | 'live'>(() => {
@@ -43,7 +44,7 @@ export function Layout() {
     {
       id: 1,
       category: 'SÍSMICO',
-      message: 'IGP reporta micro-aceleración de 0.05g en Falla de la Costa Central. N.E.X.U.S. 4D en modo preventivo.',
+      message: 'IGP reporta micro-aceleración de 0.05g en Falla de la Costa Central. Módulo de Riesgos en modo preventivo.',
       time: 'Hace 5m',
       type: 'warning',
       unread: true
@@ -51,7 +52,7 @@ export function Layout() {
     {
       id: 2,
       category: 'HIDROLÓGICO',
-      message: 'Poechos registra ingreso de cota máxima de 103 msnm. Richards PDE recalculando flujo de descarga.',
+      message: 'Poechos registra cota máxima de 103 msnm. Modelo de simulación estimando caudal de descarga.',
       time: 'Hace 15m',
       type: 'info',
       unread: true
@@ -67,7 +68,7 @@ export function Layout() {
     {
       id: 4,
       category: 'INCENDIO',
-      message: 'Satélite Sentinel-2 alerta anomalía térmica menor en Tambopata (NDVI/NBR). Guardaparques alertados.',
+      message: 'Imágenes satelitales alertan anomalía térmica menor en Tambopata (NDVI/NBR). Guardaparques alertados.',
       time: 'Hace 1h',
       type: 'danger',
       unread: false
@@ -221,7 +222,7 @@ export function Layout() {
               )}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-2 shrink-0"></span>
-              Seguridad Alimentaria
+              {language === 'qu' ? 'Mikhuy Ruray Amachay' : 'Seguridad Alimentaria'}
             </button>
             <button
               onClick={() => setDimension('desastres')}
@@ -233,7 +234,7 @@ export function Layout() {
               )}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-2 shrink-0 animate-pulse"></span>
-              Gestión de Desastres
+              {language === 'qu' ? 'Llakiykuna Allichay' : 'Gestión de Desastres'}
             </button>
             <button
               onClick={() => setDimension('recursos')}
@@ -245,13 +246,13 @@ export function Layout() {
               )}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-2 shrink-0"></span>
-              Hidrología & Reservas
+              {language === 'qu' ? 'Yaku Kallpachay' : 'Agua y Recursos Hídricos'}
             </button>
           </div>
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
-          {navigation.map((item) => {
+          {dynamicNavigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <NavLink
@@ -278,7 +279,7 @@ export function Layout() {
               JS
             </div>
             <div className="ml-3">
-              <p className="text-xs font-bold text-slate-200">Ing. Agrónomo</p>
+              <p className="text-xs font-bold text-slate-200">{t.roleBadge}</p>
               <p className="text-[10px] text-slate-400">ID: 1045-PRO</p>
             </div>
           </div>
@@ -302,26 +303,39 @@ export function Layout() {
             <Search className="w-4 h-4 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Buscar parcela, sensor, receta..." 
+              placeholder={t.searchPlaceholder} 
               className="bg-transparent border-none outline-none text-xs text-slate-200 px-3 w-64 placeholder:text-slate-500"
             />
           </div>
 
           <div className="flex items-center space-x-4 relative">
+            {/* Language Selector */}
+            <div className="flex items-center space-x-1.5 bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 rounded-full px-3 py-1 transition-all text-xs font-bold">
+              <Languages className="w-3.5 h-3.5 text-slate-400" />
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as 'es' | 'qu')}
+                className="bg-transparent border-none outline-none text-[9px] text-slate-350 uppercase tracking-wider font-mono font-bold cursor-pointer"
+              >
+                <option value="es" className="bg-slate-900 text-slate-300">ESP</option>
+                <option value="qu" className="bg-slate-900 text-slate-300">QUE</option>
+              </select>
+            </div>
+
             {/* Professional Data Mode Switcher */}
             <button 
               onClick={toggleDataMode}
               className={cn(
                 "flex items-center space-x-2 px-3 py-1.5 border rounded-full transition-all text-xs font-bold cursor-pointer",
                 dataMode === 'live' 
-                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
+                  ? "bg-emerald-500/10 text-emerald-450 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
                   : "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
               )}
-              title="Alternar Modo de Origen de Datos del Sistema"
+              title={t.modeTooltip}
             >
               <span className={cn("w-1.5 h-1.5 rounded-full", dataMode === 'live' ? "bg-emerald-400 animate-pulse" : "bg-amber-400")}></span>
               <span className="text-[9px] uppercase tracking-wider font-mono">
-                {dataMode === 'live' ? 'Datos: PostGIS Live' : 'Datos: Escenario Controlado'}
+                {t.modeLabel} {dataMode === 'live' ? t.modeLive : t.modeControlled}
               </span>
             </button>
 
@@ -372,14 +386,14 @@ export function Layout() {
                     <div className="flex justify-between items-center pb-2.5 border-b border-slate-800 mb-3">
                       <span className="font-bold text-slate-200 flex items-center">
                         <ShieldAlert className="w-4 h-4 text-rose-500 mr-2" />
-                        Centro de Notificaciones N.E.X.U.S.
+                        {language === 'qu' ? 'Allpa sasachakuy willakuykuna' : 'Alertas Territoriales'}
                       </span>
                       {unreadCount > 0 && (
                         <button 
                           onClick={markAllRead}
                           className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold hover:underline"
                         >
-                          Marcar todo leído
+                          {t.markAllRead}
                         </button>
                       )}
                     </div>
@@ -388,7 +402,7 @@ export function Layout() {
                       {notifications.length === 0 ? (
                         <div className="text-center py-6 text-slate-500 font-mono">
                           <CheckCircle2 className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                          No hay alertas activas en el servidor.
+                          {t.noAlerts}
                         </div>
                       ) : (
                         notifications.map((item) => (
@@ -429,7 +443,7 @@ export function Layout() {
                     <div className="mt-3.5 pt-2 border-t border-slate-800 text-center">
                       <span className="text-[8px] text-slate-500 font-mono flex items-center justify-center">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 mr-1.5" />
-                        Monitoreo continuo conectado a CEPLAN + SENAMHI + IGP
+                        {t.footerCaption}
                       </span>
                     </div>
                   </div>

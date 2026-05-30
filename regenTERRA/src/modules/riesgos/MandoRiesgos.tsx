@@ -5,6 +5,7 @@ import { useDimension } from '../../context/DimensionContext';
 import { logisticsAPI } from '../../utils/api';
 import { useRiskAlerts } from '../../hooks/useRiskAlerts';
 import RiskMap from './components/RiskMap';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 function InfoTooltip({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
@@ -31,6 +32,7 @@ function InfoTooltip({ text }: { text: string }) {
 
 export function MandoRiesgos() {
   const { dimension, setDimension } = useDimension();
+  const { t, language } = useLanguage();
 
   // Simulation states
   const [landslideSimulated, setLandslideSimulated] = useState(false);
@@ -408,26 +410,26 @@ export function MandoRiesgos() {
             {dimension === 'alimentaria' ? (
               <>
                 <Compass className="w-8 h-8 text-emerald-400 mr-3 animate-pulse" />
-                Mando de Riesgos Logísticos
+                {t.risks.titleLogistics}
               </>
             ) : dimension === 'recursos' ? (
               <>
                 <Droplet className="w-8 h-8 text-cyan-400 mr-3 animate-pulse" />
-                Mando de Riesgos: Recursos Hidrológicos
+                {t.risks.titleWater}
               </>
             ) : (
               <>
                 <ShieldAlert className="w-8 h-8 text-rose-500 mr-3 animate-pulse" />
-                Mando de Riesgos y Desastres Naturales
+                {t.risks.titleDisasters}
               </>
             )}
           </h1>
           <p className="text-slate-400 mt-1">
             {dimension === 'alimentaria' 
-              ? 'Optimización proactiva de la red vial y rutas de abastecimiento en milisegundos con motor Golang (nexus_router) sobre red PostGIS.'
+              ? t.risks.descLogistics
               : dimension === 'recursos'
-              ? 'Monitoreo dinámico de cuencas, represas y balances de infiltración edafológica Richards PDE.'
-              : 'Monitoreo geoespacial en tiempo real de sismos, huaicos, heladas e incendios en todo el territorio nacional.'
+              ? t.risks.descWater
+              : t.risks.descDisasters
             }
           </p>
         </div>
@@ -438,11 +440,11 @@ export function MandoRiesgos() {
             onClick={() => { setDimension('alimentaria'); setActivePoint(null); }}
             className={cn(
               "px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center",
-              dimension === 'alimentaria' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "text-slate-450 hover:text-slate-200"
+              dimension === 'alimentaria' ? "bg-emerald-500/10 text-emerald-440 border border-emerald-500/20" : "text-slate-450 hover:text-slate-200"
             )}
           >
             <Compass className="w-3.5 h-3.5 mr-1.5" />
-            Ruta del Agricultor
+            {t.risks.btnRoute}
           </button>
           <button 
             onClick={() => { setDimension('desastres'); setActivePoint(null); }}
@@ -452,7 +454,7 @@ export function MandoRiesgos() {
             )}
           >
             <ShieldAlert className="w-3.5 h-3.5 mr-1.5" />
-            Mapa de Desastres
+            {t.risks.btnMap}
           </button>
           <button 
             onClick={() => { setDimension('recursos'); setActivePoint(null); }}
@@ -462,7 +464,7 @@ export function MandoRiesgos() {
             )}
           >
             <Droplet className="w-3.5 h-3.5 mr-1.5" />
-            Hidrología & Reservas
+            {t.risks.btnWater}
           </button>
         </div>
       </div>
@@ -476,29 +478,29 @@ export function MandoRiesgos() {
             {dimension === 'alimentaria' ? (
               <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 flex flex-col min-h-0 flex-1 space-y-4">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center shrink-0">
-                  <Compass className="w-4 h-4 mr-2 text-emerald-450 animate-pulse" />
-                  Buscador de Ruta Óptima (SAT-Agro Pro)
+                  <Compass className="w-4 h-4 mr-2 text-emerald-455 animate-pulse" />
+                  {t.risks.optimalRouteSearch}
                 </h3>
                 
                 <div className="space-y-3.5 overflow-y-auto pr-1 flex-1 text-xs">
                   <div className="p-3 bg-slate-950 rounded-lg border border-slate-900 leading-relaxed space-y-2">
                     <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
-                      <span>PUNTO DE SALIDA:</span>
+                      <span>{t.risks.routeOrigin}</span>
                       <span className="font-bold text-emerald-400">PIURA / CHANCAY</span>
                     </div>
                     <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
-                      <span>PUNTO DE DESTINO:</span>
+                      <span>{t.risks.routeDest}</span>
                       <span className="font-bold text-cyan-400">LIMA MAYORISTA</span>
                     </div>
                   </div>
 
                   <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg space-y-1.5">
                     <div className="font-bold text-emerald-400 flex items-center justify-between">
-                      <span className="flex items-center"><Truck className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Estado de Canal Logístico</span>
-                      <InfoTooltip text="El módulo SAT-Agro Pro emplea sensores telemétricos LoRa integrados en contenedores refrigerados para registrar temperatura, vibración de talud y humedad foliar en tiempo real, garantizando la preservación de la carga." />
+                      <span className="flex items-center"><Truck className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> {t.risks.channelStatus}</span>
+                      <InfoTooltip text="El módulo de monitoreo emplea sensores telemétricos LoRa integrados en contenedores refrigerados para registrar temperatura, vibración de talud y humedad foliar en tiempo real, garantizando la preservación de la carga." />
                     </div>
                     <p className="text-[10px] text-slate-400 leading-normal">
-                      Monitoreo activo de la cadena de frío en flotas.
+                      {t.risks.channelDesc}
                     </p>
                   </div>
 
@@ -509,13 +511,13 @@ export function MandoRiesgos() {
                       : "bg-cyan-500/5 border-cyan-500/10 text-cyan-400"
                   )}>
                     <div className="font-bold flex items-center justify-between">
-                      <span className="flex items-center"><AlertTriangle className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Ruta Panamericana</span>
+                      <span className="flex items-center"><AlertTriangle className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> {t.risks.panamericanRoute}</span>
                       <InfoTooltip text="Monitoreo satelital y de radar Sentinel-2 fusionado con inclinómetros a pie de talud. La ocurrencia de huaicos o deslizamientos de tierra actualiza dinámicamente el peso de coste de aristas en pgRouting a infinito." />
                     </div>
                     <p className="text-[10px] text-slate-400 leading-normal">
                       {landslideSimulated 
-                        ? "Panamericana Norte cortada en Casma. Desvío activo." 
-                        : "Carretera libre. Tránsito fluido directo para el transporte."}
+                        ? t.risks.panamericanBlocked 
+                        : t.risks.panamericanFree}
                     </p>
                   </div>
                 </div>
@@ -524,42 +526,42 @@ export function MandoRiesgos() {
               <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 flex flex-col min-h-0 flex-1 space-y-4">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center shrink-0">
                   <Droplet className="w-4 h-4 mr-2 text-cyan-400" />
-                  Balances Hidrológicos (O.M.N.I. TERRA)
+                  {t.risks.hydrologicalBalances}
                 </h3>
                 
                 <div className="space-y-3 overflow-y-auto pr-1 flex-1 text-xs">
                   <div className="p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-lg space-y-1">
                     <span className="text-[9px] bg-cyan-500/20 px-1.5 py-0.5 rounded text-cyan-400 font-bold tracking-wider flex items-center justify-between">
-                      <span>RICHARDS PDE SOLVER</span>
+                      <span>{t.risks.richardsPDE}</span>
                       <InfoTooltip text="Fusión de reflectancia de Sentinel-2 con ecuaciones diferenciales parciales de Richards para predecir la pluma de salinidad y evapotranspiración foliar en subsuelo (20/40/60 cm) sin instrumentación física costosa." />
                     </span>
                     <p className="text-[10px] text-slate-450 mt-1.5 leading-normal">
-                      Red neuronal PINN calcula infiltración de humedad.
+                      {t.risks.richardsDesc}
                     </p>
                   </div>
 
                   <div className="p-3 bg-slate-950 rounded-lg border border-slate-900 space-y-2 text-[10px] font-mono text-slate-455">
                     <div className="flex justify-between border-b border-slate-900 pb-1.5">
-                      <span>Carga Poechos:</span>
-                      <span className="font-bold text-cyan-400">68% (Caudal controlado)</span>
+                      <span>{t.risks.poechosLoad}</span>
+                      <span className="font-bold text-cyan-400">68% ({t.risks.underflowControl})</span>
                     </div>
                     <div className="flex justify-between border-b border-slate-900 pb-1.5">
-                      <span>Riego Bajo Piura:</span>
-                      <span className="font-bold text-emerald-450">Optimizado por Richards</span>
+                      <span>{t.risks.piuraIrrigation}</span>
+                      <span className="font-bold text-emerald-450">{t.risks.optimizedHydraulic}</span>
                     </div>
                     <div className="flex justify-between border-b border-slate-900 pb-1.5">
-                      <span>Conductividad Rizósfera:</span>
-                      <span className="font-bold text-amber-500">1.8 dS/m (Sano)</span>
+                      <span>{t.risks.rhizoConductivity}</span>
+                      <span className="font-bold text-amber-500">1.8 dS/m ({t.risks.soilHealthy})</span>
                     </div>
                   </div>
 
                   <div className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-lg space-y-1.5">
                     <div className="font-bold text-rose-400 flex items-center justify-between">
-                      <span className="flex items-center"><AlertTriangle className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Estrés Hídrico Crónico</span>
+                      <span className="flex items-center"><AlertTriangle className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> {t.risks.waterStressAlert}</span>
                       <InfoTooltip text="Evaluación hidrológica a escala de cuencas de la costa norte y altiplano. Combina datos históricos e in-situ del ANA y reflectancias multiespectrales para predecir déficits de riego." />
                     </div>
                     <p className="text-[10px] text-slate-400 leading-normal">
-                      Zonas agrícolas del sur presentan recarga de acuíferos negativa.
+                      {t.risks.waterStressDesc}
                     </p>
                   </div>
                 </div>
@@ -568,7 +570,7 @@ export function MandoRiesgos() {
               <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 flex flex-col min-h-0 flex-1">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center shrink-0">
                   <ShieldAlert className="w-4 h-4 mr-2 text-rose-500 animate-pulse" />
-                  Alertas en Tiempo Real (N.E.X.U.S. 4D)
+                  {t.risks.realtimeAlerts}
                 </h3>
                 
                 <div className="space-y-2.5 overflow-y-auto pr-1 flex-1">
@@ -577,7 +579,7 @@ export function MandoRiesgos() {
                     const desc = detalles.descripcion || `${alert.tipo_evento} activo...`;
                     
                     const colorClass = alert.severidad >= 5 
-                      ? "text-rose-450" 
+                      ? "text-rose-455" 
                       : alert.severidad >= 3 
                         ? "text-amber-400" 
                         : "text-cyan-400";
@@ -586,16 +588,17 @@ export function MandoRiesgos() {
                       : alert.severidad >= 3 
                         ? "bg-amber-500/5 border-amber-500/10 hover:bg-amber-500/10" 
                         : "bg-cyan-500/5 border-cyan-500/10 hover:bg-cyan-500/10";
+                    const bgActive = activePoint === alert.id.toString() ? "border-slate-500 bg-slate-900/40" : "border-transparent";
                     const badgeClass = alert.severidad >= 5 
                       ? "bg-rose-500/20" 
                       : alert.severidad >= 3 
                         ? "bg-amber-500/20" 
                         : "bg-cyan-500/20";
                     const badgeText = alert.severidad >= 5 
-                      ? "CRÍTICO" 
+                      ? t.risks.alertCritical 
                       : alert.severidad >= 3 
-                        ? "ALERTA" 
-                        : "INFO";
+                        ? t.risks.alertWarning 
+                        : t.risks.alertInfo;
 
                     // Map standard icons
                     let IconComponent = ShieldAlert;
@@ -621,7 +624,7 @@ export function MandoRiesgos() {
                         className={cn(
                           "p-3 border rounded-lg text-xs cursor-pointer transition-colors",
                           bgClass,
-                          activePoint === alert.id.toString() ? "border-slate-500 bg-slate-900/40" : "border-transparent"
+                          bgActive
                         )}
                       >
                         <div className={cn("flex justify-between items-center font-bold", colorClass)}>
@@ -642,13 +645,13 @@ export function MandoRiesgos() {
 
                   {alerts.length === 0 && !alertsLoading && (
                     <div className="text-center py-6 text-slate-500 text-[10px] font-mono">
-                      No hay alertas activas en el territorio.
+                      {t.risks.noAlerts}
                     </div>
                   )}
 
                   {alertsLoading && (
                     <div className="text-center py-6 text-slate-500 text-[10px] font-mono animate-pulse">
-                      Sincronizando alertas PostGIS...
+                      {t.risks.syncingAlerts}
                     </div>
                   )}
                 </div>
@@ -659,29 +662,29 @@ export function MandoRiesgos() {
             <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 space-y-3 shrink-0">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
                 <Activity className="w-4 h-4 mr-2 text-cyan-400" />
-                Estado del Motor Lógico
+                {t.risks.logicalEngineStatus}
               </h3>
               <div className="space-y-2 text-[11px] text-slate-400 leading-relaxed">
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
-                  <span>Motor Logístico:</span>
-                  <span className={cn("font-bold", goRouterConnected ? "text-emerald-405" : "text-slate-200")}>
-                    {goRouterConnected ? "Golang (CONECTADO EN VIVO)" : "Golang (SIMULADO LOCAL)"}
+                  <span>{t.risks.engineLabel}</span>
+                  <span className={cn("font-bold", goRouterConnected ? "text-emerald-450" : "text-slate-200")}>
+                    {goRouterConnected ? t.risks.engineConnected : t.risks.engineDisconnected}
                   </span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
-                  <span>Red Georreferenciada:</span>
+                  <span>{t.risks.georefNetwork}</span>
                   <span className="font-bold text-slate-200">PostGIS (1,420,542 Aristas)</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
-                  <span>Tiempo de Cómputo:</span>
+                  <span>{t.risks.computationTime}</span>
                   <span className="font-mono font-bold text-cyan-400">
-                    {solverTimeMs} milisegundos
+                    {solverTimeMs} {t.risks.computationMs}
                   </span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-1.5">
-                  <span>Bypass Logístico:</span>
+                  <span>{t.risks.logisticBypass}</span>
                   <span className={cn("font-bold", landslideSimulated ? "text-cyan-400 animate-pulse" : "text-slate-500")}>
-                    {landslideSimulated ? `ACTIVO (${reroutedPaths} flotas desviadas)` : "Standby"}
+                    {landslideSimulated ? `${t.risks.bypassActive} (${reroutedPaths})` : t.risks.bypassStandby}
                   </span>
                 </div>
               </div>
@@ -691,8 +694,8 @@ export function MandoRiesgos() {
           {/* Simulating action buttons */}
           <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 space-y-3 shrink-0">
             <p className="text-[10px] text-slate-500 font-bold leading-normal flex items-center justify-between">
-              <span>Resiliencia ante desastres geológicos en vivo:</span>
-              <InfoTooltip text="La simulación de huaicos introduce obstrucciones geológicas aleatorias en la red vial nacional de 1.4 millones de aristas. El motor nexus_router recalcula el bypass en la base de datos relacional en milisegundos." />
+              <span>{t.risks.simulationLabel}</span>
+              <InfoTooltip text={t.risks.simulationTooltip} />
             </p>
             <button
               onClick={triggerLandslideSimulation}
@@ -702,14 +705,14 @@ export function MandoRiesgos() {
               {recalculatingLogistics ? (
                 <>
                   <RotateCcw className="w-3.5 h-3.5 mr-2 animate-spin" />
-                  pgRouting Solver recalculando...
+                  {t.risks.recalculating}
                 </>
               ) : landslideSimulated ? (
-                "Restaurar Vía Panamericana"
+                t.risks.restoreRoad
               ) : (
                 <>
                   <AlertTriangle className="w-3.5 h-3.5 mr-2 animate-pulse" />
-                  Simular Huaico (KM 385)
+                  {t.risks.simulateLandslide}
                 </>
               )}
             </button>
@@ -735,8 +738,8 @@ export function MandoRiesgos() {
               
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-800">
                 {activeDetail 
-                  ? (dimension === 'alimentaria' ? "Logística e Itinerario de Carga" : dimension === 'recursos' ? "Balances de Cuenca Hídrica" : "Detalles de Alerta y Telemetría")
-                  : "Análisis Territorial Integrado"
+                  ? (dimension === 'alimentaria' ? t.risks.detailsLogistics : dimension === 'recursos' ? t.risks.detailsWater : t.risks.detailsAlerts)
+                  : t.risks.integratedAnalysis
                 }
               </h3>
 
@@ -748,7 +751,7 @@ export function MandoRiesgos() {
                       <span>{activeDetail.name}</span>
                     </h4>
                     <span className="inline-block mt-1 px-2 py-0.5 bg-slate-800 text-rose-455 text-[9px] font-mono rounded font-bold">
-                      Estado: {activeDetail.status}
+                      {language === 'qu' ? 'Kaynin:' : 'Estado:'} {activeDetail.status}
                     </span>
                   </div>
 
@@ -770,7 +773,7 @@ export function MandoRiesgos() {
                   </div>
 
                   <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 text-[10px] text-slate-450 leading-relaxed font-mono">
-                    <span className="font-bold text-slate-300 block mb-1">Métricas de Control:</span>
+                    <span className="font-bold text-slate-300 block mb-1">{language === 'qu' ? 'Kallpachay tupukuna:' : 'Métricas de Control:'}</span>
                     {activeDetail.details}
                   </div>
 
@@ -778,7 +781,7 @@ export function MandoRiesgos() {
                     onClick={() => setActivePoint(null)}
                     className="w-full py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[10px] rounded font-bold text-slate-300 transition-colors"
                   >
-                    Cerrar Detalles
+                    {language === 'qu' ? 'Wisk\'ay willakuykuna' : 'Cerrar Detalles'}
                   </button>
                 </div>
               ) : (
@@ -786,18 +789,18 @@ export function MandoRiesgos() {
                   {dimension === 'alimentaria' ? (
                     <>
                       <div className="flex justify-between items-center font-bold text-slate-200">
-                        <span>Canal de Ruta SAT-Agro Pro</span>
+                        <span>{t.risks.optimalRouteTitle}</span>
                         <InfoTooltip text="El planificador logístico de GeoTERRA está diseñado para predecir colapsos y desviar de forma proactiva la carga hacia la sierra. Las bajas temperaturas del Callejón de Huaylas actúan como refrigeración natural pasiva." />
                       </div>
                       <p className="text-[10px] text-slate-400">
-                        Optimización de itinerarios fríos ante bloqueos geológicos.
+                        {t.risks.optimalRouteDesc}
                       </p>
                       
                       <div className="p-3 bg-slate-950 rounded-lg border border-slate-850 text-[9px] text-slate-500 leading-normal flex items-start justify-between">
                         <span className="flex items-start space-x-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-emerald-450 shrink-0 mt-0.5" />
                           <span>
-                            <strong>Ruteo Inteligente</strong> pgRouting en desvío Huaraz/Canta.
+                            <strong>{t.risks.routeProposal}</strong> pgRouting en desvío Huaraz/Canta.
                           </span>
                         </span>
                         <InfoTooltip text="Algoritmo Dijkstra multihilo en Go calcula la ruta alternativa por Canta/Huaraz en menos de 50ms, mitigando el 96% de la pérdida por descomposición térmica de los cultivos." />
@@ -806,8 +809,8 @@ export function MandoRiesgos() {
                   ) : dimension === 'recursos' ? (
                     <>
                       <div className="flex justify-between items-center font-bold text-slate-200">
-                        <span>Soporte O.M.N.I. TERRA</span>
-                        <InfoTooltip text="O.M.N.I. TERRA calcula en milisegundos las tasas de infiltración edafológica (Green-Ampt) y transporte de humedad (Richards) a nivel nacional." />
+                        <span>{t.risks.hydrologicalBalances}</span>
+                        <InfoTooltip text="El motor analítico estima en milisegundos las tasas de infiltración edafológica y transporte de humedad a nivel nacional." />
                       </div>
                       <p className="text-[10px] text-slate-400">
                         Infiltración edafológica y balance hídrico continuo.
@@ -817,7 +820,7 @@ export function MandoRiesgos() {
                         <span className="flex items-start space-x-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
                           <span>
-                            <strong>Inteligencia Hídrica</strong> Fusión Sentinel-2 y Richards PDE.
+                            <strong>{language === 'qu' ? 'Yachay Yaku' : 'Inteligencia Hídrica'}</strong> Fusión Sentinel-2 y Richards PDE.
                           </span>
                         </span>
                         <InfoTooltip text="Fusión de datos de reflectancia satelital Sentinel-2 (bandas infrarrojas de onda corta) con resolvedores Richards PDE para estimar salinidad, conductividad eléctrica y tasas de lixiviación óptimas." />
@@ -826,7 +829,7 @@ export function MandoRiesgos() {
                   ) : (
                     <>
                       <div className="flex justify-between items-center font-bold text-slate-200">
-                        <span>Motor N.E.X.U.S. 4D</span>
+                        <span>{t.risks.realtimeAlerts}</span>
                         <InfoTooltip text="Sincronización directa en milisegundos con streams de aceleración sísmica del IGP y micro-climas del SENAMHI, mapeando vectores de evacuación en 3D." />
                       </div>
                       <p className="text-[10px] text-slate-400">
@@ -837,7 +840,7 @@ export function MandoRiesgos() {
                         <span className="flex items-start space-x-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5 animate-pulse" />
                           <span>
-                            <strong>Garantía de Resiliencia</strong> Alertas tempranas automatizadas.
+                            <strong>{language === 'qu' ? 'Llakiy Amachay' : 'Garantía de Resiliencia'}</strong> Alertas tempranas automatizadas.
                           </span>
                         </span>
                         <InfoTooltip text="Modelos predictivos de deslizamiento y heladas gatillan notificaciones de Defensa Civil con hasta 48 horas de antelación vía SMS y LoRa a caseríos incomunicados." />
@@ -853,13 +856,13 @@ export function MandoRiesgos() {
               <div className="glass-panel border border-rose-500/20 p-4 rounded-xl bg-rose-500/5 text-xs text-rose-455 space-y-2 animate-pulse">
                 <div className="flex items-center font-bold text-rose-455">
                   <ShieldAlert className="w-4 h-4 mr-2" />
-                  <span>ALERTA: pgRouting Activo</span>
+                  <span>{t.risks.resilienceBannerTitle}</span>
                 </div>
                 <p className="text-[10px] leading-relaxed text-slate-300">
-                  Desvío logístico rural activado en el servidor Go. Tránsito redirigido de forma automática por la vía Canta-Huaraz.
+                  {t.risks.resilienceBannerDesc}
                 </p>
                 <div className="p-1.5 bg-cyan-950/20 border border-cyan-500/20 text-[10px] text-cyan-400 font-mono rounded font-bold">
-                  Bypass exitoso (Mermas alimentarias mitigadas significativamente)
+                  {t.risks.resilienceBannerSuccess}
                 </div>
               </div>
             )}
@@ -869,31 +872,31 @@ export function MandoRiesgos() {
           <div className="glass-panel border border-slate-700/50 rounded-xl p-4 bg-[#0b0f19]/70 shrink-0">
             <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center">
               <Truck className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
-              {dimension === 'alimentaria' ? "Flota en Desvío de Sierra" : dimension === 'recursos' ? "Estado de Riego Agrícola" : "Flota en Tránsito Regional"}
+              {dimension === 'alimentaria' ? t.risks.fleetSierra : dimension === 'recursos' ? t.risks.fleetIrrigation : t.risks.fleetNormal}
             </h4>
             
             {dimension === 'recursos' ? (
               <div className="space-y-1.5 font-mono text-[9px] text-slate-400">
                 <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
-                  <span className="text-slate-300 font-bold">ZONA A (Piura)</span>
+                  <span className="text-slate-300 font-bold">{t.risks.zoneA}</span>
                   <span>Yeso Variable: 2.4 Tn/Ha</span>
-                  <span className="text-emerald-450 font-bold">PROGRAMADO</span>
+                  <span className="text-emerald-455 font-bold">{t.risks.scheduled}</span>
                 </div>
                 <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
-                  <span className="text-slate-300 font-bold">ZONA B (Chancay)</span>
+                  <span className="text-slate-300 font-bold">{t.risks.zoneB}</span>
                   <span>Riego: 45 min de compuerta</span>
-                  <span className="text-cyan-400 font-bold">ACTIVO</span>
+                  <span className="text-cyan-400 font-bold">{t.risks.active}</span>
                 </div>
               </div>
             ) : (
               <div className="space-y-1.5 font-mono text-[9px] text-slate-400">
                 <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
-                  <span className="text-slate-300 font-bold">TRUCK-PE-01</span>
+                  <span className="text-slate-300 font-bold">{t.risks.truck1}</span>
                   <span>Piura ──► Chiclayo</span>
                   <span className="text-emerald-450">75 km/h</span>
                 </div>
                 <div className="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-900">
-                  <span className="text-slate-300 font-bold">TRUCK-PE-02</span>
+                  <span className="text-slate-300 font-bold">{t.risks.truck2}</span>
                   <span className={cn("transition-colors", landslideSimulated ? "text-cyan-400 animate-pulse" : "text-slate-450")}>
                     {landslideSimulated ? "Huaraz (Bypass)" : "Casma (Panam)"}
                   </span>

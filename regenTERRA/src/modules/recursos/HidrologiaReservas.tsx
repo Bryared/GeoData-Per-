@@ -53,7 +53,7 @@ export function HidrologiaReservas() {
       <div>
         <h1 className="text-2xl font-bold text-slate-100 flex items-center">
           <Droplet className="w-6 h-6 text-cyan-400 mr-2" />
-          Agua y Reservas
+          Agua y Recursos Hídricos
         </h1>
         <p className="text-slate-400 text-xs mt-0.5">
           Monitoreo de la disponibilidad hídrica regional, almacenamiento de embalses y balances oferta/demanda para juntas de riego.

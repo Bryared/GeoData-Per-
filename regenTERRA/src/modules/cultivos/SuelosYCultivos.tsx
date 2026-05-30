@@ -4,8 +4,10 @@ import { Map3DKriging } from '../edafologia/Map3DKriging';
 import { RecetasVRA } from '../edafologia/RecetasVRA';
 import { Activity, Map, Cpu, ClipboardList, Sparkles, CheckCircle2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export function SuelosYCultivos() {
+  const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'telemetry' | 'satellite' | 'predictor' | 'recipes'>('telemetry');
 
   // Soil Predictor State (UNALM calibration simulator)
@@ -71,20 +73,20 @@ export function SuelosYCultivos() {
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center">
             <Sparkles className="w-6 h-6 text-emerald-450 mr-2" />
-            Suelos y Cultivos
+            {t.crops.title}
           </h1>
           <p className="text-slate-400 text-xs mt-0.5">
-            Módulo integrado de edafología, análisis satelital Copernicus, predicción de aptitud de cultivos y recetas de enmiendas.
+            {t.crops.subtitle}
           </p>
         </div>
 
         {/* Tab Buttons */}
         <div className="flex bg-slate-900 border border-slate-800 p-1 rounded-xl shrink-0 self-start md:self-auto">
           {[
-            { id: 'telemetry', label: 'Telemetría', icon: Activity },
-            { id: 'satellite', label: 'Satélite 3D', icon: Map },
-            { id: 'predictor', label: 'Predictor', icon: Cpu },
-            { id: 'recipes', label: 'Recetas VRA', icon: ClipboardList }
+            { id: 'telemetry', label: t.crops.tabTelemetry, icon: Activity },
+            { id: 'satellite', label: t.crops.tabSatellite, icon: Map },
+            { id: 'predictor', label: t.crops.tabPredictor, icon: Cpu },
+            { id: 'recipes', label: t.crops.tabRecipes, icon: ClipboardList }
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -142,14 +144,14 @@ export function SuelosYCultivos() {
             <div className="lg:col-span-1 glass-panel border border-slate-700/50 p-6 rounded-2xl bg-slate-900/40 space-y-5">
               <h3 className="text-sm font-bold text-slate-200 border-b border-slate-800 pb-3 flex items-center">
                 <Cpu className="w-4 h-4 text-emerald-455 mr-2" />
-                Variables de Entrada del Suelo
+                {t.crops.inputTitle}
               </h3>
 
               <div className="space-y-4 text-xs">
                 {/* pH selector */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-slate-450 font-bold">Acidez del Suelo (pH)</span>
+                    <span className="text-slate-450 font-bold">{t.crops.phLabel}</span>
                     <span className="font-mono text-emerald-400 font-bold">{ph.toFixed(1)}</span>
                   </div>
                   <input
@@ -162,16 +164,16 @@ export function SuelosYCultivos() {
                     className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                   />
                   <div className="flex justify-between text-[9px] text-slate-500 font-mono">
-                    <span>Ácido (5.0)</span>
-                    <span>Neutro (7.0)</span>
-                    <span>Alcalino (9.0)</span>
+                    <span>{t.crops.phAcid}</span>
+                    <span>{t.crops.phNeutral}</span>
+                    <span>{t.crops.phAlkaline}</span>
                   </div>
                 </div>
 
                 {/* Salinity selector */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-slate-450 font-bold">Conductividad Eléctrica (CE)</span>
+                    <span className="text-slate-450 font-bold">{t.crops.ecLabel}</span>
                     <span className="font-mono text-amber-400 font-bold">{conductividad.toFixed(1)} dS/m</span>
                   </div>
                   <input
@@ -184,33 +186,33 @@ export function SuelosYCultivos() {
                     className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                   />
                   <div className="flex justify-between text-[9px] text-slate-500 font-mono">
-                    <span>Bajo (0.5)</span>
-                    <span>Salino (4.0)</span>
-                    <span>Muy Salino (10.0)</span>
+                    <span>{t.crops.ecLow}</span>
+                    <span>{t.crops.ecSaline}</span>
+                    <span>{t.crops.ecVerySaline}</span>
                   </div>
                 </div>
 
                 {/* Texture selector */}
                 <div className="space-y-1.5">
-                  <label className="text-slate-450 font-bold block">Textura del Suelo (Tacto)</label>
+                  <label className="text-slate-450 font-bold block">{t.crops.textureLabel}</label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { id: 'franco', label: 'Franco (Loam)' },
-                      { id: 'arenoso', label: 'Arenoso (Sand)' },
-                      { id: 'arcilloso', label: 'Arcilloso (Clay)' }
-                    ].map((t) => (
+                      { id: 'franco', label: t.crops.textureLoam },
+                      { id: 'arenoso', label: t.crops.textureSand },
+                      { id: 'arcilloso', label: t.crops.textureClay }
+                    ].map((t_item) => (
                       <button
-                        key={t.id}
+                        key={t_item.id}
                         type="button"
-                        onClick={() => setTextura(t.id as any)}
+                        onClick={() => setTextura(t_item.id as any)}
                         className={cn(
                           "py-2 rounded-lg text-[10px] font-bold border transition-all text-center",
-                          textura === t.id
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-450 shadow-sm"
+                          textura === t_item.id
+                            ? "bg-emerald-500/10 text-emerald-450 border-emerald-500/30 font-black shadow-sm"
                             : "bg-slate-950/40 border-slate-850 text-slate-500 hover:text-slate-400"
                         )}
                       >
-                        {t.label}
+                        {t_item.label}
                       </button>
                     ))}
                   </div>
@@ -224,10 +226,10 @@ export function SuelosYCultivos() {
                   {isPredicting ? (
                     <>
                       <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Procesando XGBoost UNALM...</span>
+                      <span>{t.crops.btnPredicting}</span>
                     </>
                   ) : (
-                    <span>Ejecutar Modelo Predictivo</span>
+                    <span>{t.crops.btnPredict}</span>
                   )}
                 </button>
               </div>
@@ -241,9 +243,9 @@ export function SuelosYCultivos() {
                 <div className="text-center py-12 space-y-3.5">
                   <Cpu className="w-12 h-12 text-slate-750 mx-auto animate-pulse" />
                   <div>
-                    <h4 className="text-sm font-bold text-slate-300">Esperando simulación</h4>
+                    <h4 className="text-sm font-bold text-slate-300">{t.crops.waitPredictTitle}</h4>
                     <p className="text-slate-500 text-xs mt-1 max-w-sm mx-auto font-light leading-normal">
-                      Ajusta los parámetros edafológicos del panel de la izquierda y haz clic en "Ejecutar Modelo" para evaluar la aptitud del cultivo mediante la calibración satelital.
+                      {t.crops.waitPredictDesc}
                     </p>
                   </div>
                 </div>
@@ -251,10 +253,10 @@ export function SuelosYCultivos() {
                 <div className="space-y-5">
                   <div>
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                      Resultados del Clasificador Agro-Territorial
+                      {t.crops.resultsTitle}
                     </h3>
                     <p className="text-slate-500 text-[10px] mt-0.5">
-                      Modelo: XGBoost Classifier. Calibrado con Sentinel-2 y Verdad-Terreno Lambayeque.
+                      {t.crops.resultsDesc}
                     </p>
                   </div>
 
@@ -270,9 +272,9 @@ export function SuelosYCultivos() {
                               crop.status === 'Marginal' ? 'bg-amber-500/10 text-amber-400' :
                               'bg-rose-500/10 text-rose-455'
                             )}>
-                              {crop.status}
+                              {crop.status === 'Óptimo' ? (language === 'qu' ? 'Allin' : 'Óptimo') : crop.status === 'Marginal' ? (language === 'qu' ? 'Chawpi' : 'Marginal') : (language === 'qu' ? 'Mana allin' : 'No Recomendado')}
                             </span>
-                            <span className="font-mono font-bold text-slate-400">{crop.score}% aptitud</span>
+                            <span className="font-mono font-bold text-slate-400">{crop.score}% {language === 'qu' ? 'allin kay' : 'aptitud'}</span>
                           </div>
                         </div>
                         <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-900">
@@ -291,7 +293,7 @@ export function SuelosYCultivos() {
 
                   <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex items-start text-[10px] text-slate-400">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mr-2 shrink-0 mt-0.5" />
-                    <span>El modelo se recalibra semanalmente con firmas espectrales Sentinel-2 para capturar variaciones temporales del suelo y humedad.</span>
+                    <span>{t.crops.modelNote}</span>
                   </div>
                 </div>
               )}
