@@ -379,12 +379,12 @@ function drawParcelsOnMap() {
 
         // Crear Tooltip con info rápida
         polygon.bindTooltip(`
-            <div style="font-family: var(--font-body); font-size: 0.75rem; color: #fff;">
-                <strong>${p.codigo}</strong><br>
+            <div style="font-family: 'Inter', 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #1e293b; min-width: 160px; line-height: 1.5;">
+                <strong style="display: block; margin-bottom: 2px;">${p.codigo}</strong>
                 Cultivo: ${p.cultivo}<br>
                 Salinidad: <strong>${ultima.conductividad_20cm} dS/m</strong>
             </div>
-        `, { sticky: true });
+        `, { sticky: true, opacity: 1 });
 
         parcelLayers[p.id] = polygon;
     });

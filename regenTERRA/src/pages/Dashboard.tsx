@@ -175,7 +175,7 @@ export function Dashboard() {
                 {language === 'qu' ? 'Allin (Estable)' : 'Normal (Estable)'}
               </option>
               <option value="nino" className="bg-slate-900 text-slate-300">
-                {language === 'qu' ? 'El Niño Llausa (Para)' : 'Fenómeno El Niño (Lluvia)'}
+                {language === 'qu' ? 'El Niño Llausa (Para)' : 'Fenómeno del Niño (Lluvia)'}
               </option>
               <option value="sequia" className="bg-slate-900 text-slate-300">
                 {language === 'qu' ? 'Ch\'aki Pacha (Evap)' : 'Sequía Extrema (Evap)'}

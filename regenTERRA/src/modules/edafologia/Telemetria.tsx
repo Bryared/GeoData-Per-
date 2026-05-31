@@ -272,8 +272,10 @@ export function Telemetria() {
   }, [isLive, sensors, dimension]);
 
   useEffect(() => {
-    if (terminalEndRef.current) {
-      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    // Scroll solo dentro del contenedor del terminal, sin afectar la barra lateral de la página
+    const terminalEl = terminalEndRef.current?.parentElement;
+    if (terminalEl) {
+      terminalEl.scrollTop = terminalEl.scrollHeight;
     }
   }, [loraLogs]);
 

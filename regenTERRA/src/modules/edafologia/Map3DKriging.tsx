@@ -259,7 +259,7 @@ export function Map3DKriging() {
         </div>
 
         {/* 3D Map Control Sidebar */}
-        <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-slate-700/50 p-6 space-y-6 flex flex-col justify-between bg-[#0b0f19]/40">
+        <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-slate-700/50 p-6 space-y-6 flex flex-col overflow-y-auto bg-[#0b0f19]/40">
           <div className="space-y-6">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="font-bold text-slate-200 text-sm">Capa Edafológica 3D</h3>

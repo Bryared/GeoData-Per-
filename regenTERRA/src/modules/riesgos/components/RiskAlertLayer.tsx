@@ -1,4 +1,4 @@
-import { Circle, Popup, GeoJSON } from 'react-leaflet';
+import { Circle, Tooltip, GeoJSON } from 'react-leaflet';
 import type { RiskAlert } from '../../../services/alertsApi';
 
 type RiskAlertLayerProps = {
@@ -72,13 +72,13 @@ export default function RiskAlertLayer({ alerts }: RiskAlertLayerProps) {
                 weight: 2,
               }}
             >
-              <Popup>{popupContent}</Popup>
+              <Tooltip sticky>{popupContent}</Tooltip>
             </GeoJSON>
           );
         }
 
         // Caso B: Si solo vienen lat/lon
-        if (typeof alert.lat === 'number' && typeof alert.lon === 'number') {
+        if (typeof alert.lat === 'number' && typeof alert.lon === 'number' && !isNaN(alert.lat) && !isNaN(alert.lon)) {
           return (
             <Circle
               key={`alert-circle-${alert.id}`}
@@ -91,7 +91,8 @@ export default function RiskAlertLayer({ alerts }: RiskAlertLayerProps) {
                 weight: 2,
               }}
             >
-              <Popup>{popupContent}</Popup>
+              {/* Tooltip sticky: sin flickering al hacer hover */}
+              <Tooltip sticky>{popupContent}</Tooltip>
             </Circle>
           );
         }
