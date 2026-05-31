@@ -15,7 +15,7 @@ export function Dashboard() {
   const [sensors, setSensors] = useState<TelemetryData[]>([]);
   const [satelliteSyncing, setSatelliteSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
-  
+
   // Dynamic API & PINN states
   const [serverConnected, setServerConnected] = useState(false);
   const [pinnResiduals, setPinnResiduals] = useState({ richards: 0.00000142, soluto: 0.00000089 });
@@ -61,7 +61,7 @@ export function Dashboard() {
   const handleClimateChange = async (newClimate: 'normal' | 'nino' | 'sequia') => {
     setClimate(newClimate);
     localStorage.setItem('soil_climate', newClimate);
-    
+
     const data = await soilAPI.getTelemetryData(newClimate);
     setSensors(data);
 
@@ -73,8 +73,8 @@ export function Dashboard() {
     setSyncMessage('');
     setTimeout(() => {
       setSatelliteSyncing(false);
-      setSyncMessage(serverConnected 
-        ? 'Sentinel-2 Sincronizado con API del Servidor Python (Holdout R²=0.94)' 
+      setSyncMessage(serverConnected
+        ? 'Sentinel-2 Sincronizado con API del Servidor Python (Holdout R²=0.94)'
         : 'Sentinel-2 Calibrado localmente (Holdout R²=0.94)'
       );
       setTimeout(() => setSyncMessage(''), 4000);
@@ -84,7 +84,7 @@ export function Dashboard() {
   const criticalParcels = sensors.filter(
     s => classifyDegradation(s) === 'Crítica' || classifyDegradation(s) === 'Severa'
   );
-  
+
   // Calculate average moisture dynamically based on climate
   const averageMoisture = useMemo(() => {
     if (sensors.length === 0) return '0%';
@@ -123,7 +123,7 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Title Header Toolbar */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
@@ -140,7 +140,7 @@ export function Dashboard() {
 
         {/* Action Panel */}
         <div className="flex flex-wrap gap-3 items-center">
-          
+
           {/* Dimension Selector (Core Vision Switcher) */}
           <div className="flex items-center space-x-2 bg-slate-800/60 border border-slate-700/80 rounded-lg px-3 py-1.5 shadow-md">
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
@@ -162,7 +162,7 @@ export function Dashboard() {
               </option>
             </select>
           </div>
-          
+
           {/* Global Climate Simulator dropdown */}
           <div className="flex items-center space-x-2 bg-slate-800/60 border border-slate-700/80 rounded-lg px-3 py-1.5">
             <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">{t.dashboard.climateLabel}</span>
@@ -264,15 +264,15 @@ export function Dashboard() {
           {t.dashboard.decisionSteps.map((item, idx) => {
             const isLast = idx === t.dashboard.decisionSteps.length - 1;
             return (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className={cn(
-                  "p-3 rounded-xl border flex flex-col justify-between space-y-1.5", 
-                  isLast 
-                    ? "border-slate-800 bg-slate-900/20 text-slate-500" 
+                  "p-3 rounded-xl border flex flex-col justify-between space-y-1.5",
+                  isLast
+                    ? "border-slate-800 bg-slate-900/20 text-slate-500"
                     : idx === 3
-                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 animate-pulse"
-                    : "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 animate-pulse"
+                      : "border-emerald-500 bg-emerald-500/10 text-emerald-400"
                 )}
               >
                 <span className="font-bold text-[10px] uppercase tracking-wider">{item.step}</span>
@@ -286,7 +286,7 @@ export function Dashboard() {
       {/* Dynamic KPI Cards depending on Operational Dimension */}
       {dimension === 'alimentaria' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <KPICard 
+          <KPICard
             title="Sensores IoT Activos"
             value={sensors.length.toString()}
             trend={`${sensors.filter(s => s.batteryLevel > 90).length} óptimos`}
@@ -294,7 +294,7 @@ export function Dashboard() {
             color="text-emerald-400"
             bg="bg-emerald-400/10"
           />
-          <KPICard 
+          <KPICard
             title="Nodos en Riesgo Salino"
             value={criticalParcels.length.toString()}
             trend={criticalParcels.length > 0 ? "Acción requerida" : "Suelos estables"}
@@ -303,7 +303,7 @@ export function Dashboard() {
             bg={criticalParcels.length > 0 ? "bg-rose-500/10" : "bg-emerald-500/10"}
             critical={criticalParcels.length > 0}
           />
-          <KPICard 
+          <KPICard
             title="Humedad Vol. Promedio"
             value={averageMoisture}
             trend={climate === 'nino' ? "+14.4% (Exceso)" : climate === 'sequia' ? "-12.2% (Déficit)" : "Nivel óptimo"}
@@ -311,7 +311,7 @@ export function Dashboard() {
             color={climate === 'sequia' ? "text-rose-400" : "text-blue-400"}
             bg={climate === 'sequia' ? "bg-rose-400/10" : "bg-blue-400/10"}
           />
-          <KPICard 
+          <KPICard
             title="Vulnerabilidad Eólica"
             value={climate === 'sequia' ? "Alta" : "Baja"}
             trend="Vel. Viento 14km/h"
@@ -324,7 +324,7 @@ export function Dashboard() {
 
       {dimension === 'desastres' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <KPICard 
+          <KPICard
             title="Alertas Sísmicas (IGP)"
             value="1 Activa"
             trend="Magnitud 4.8 Mw (Huánuco)"
@@ -333,7 +333,7 @@ export function Dashboard() {
             bg="bg-rose-500/10"
             critical={true}
           />
-          <KPICard 
+          <KPICard
             title="Focos de Calor Activos"
             value="3 Nodos"
             trend="Madre de Dios / Loreto"
@@ -341,7 +341,7 @@ export function Dashboard() {
             color="text-amber-400"
             bg="bg-amber-400/10"
           />
-          <KPICard 
+          <KPICard
             title="Riesgo de Huaico / Lluvia"
             value="Crítico"
             trend="Monitoreo Quebrada Huaycoloro"
@@ -349,7 +349,7 @@ export function Dashboard() {
             color="text-orange-400"
             bg="bg-orange-400/10"
           />
-          <KPICard 
+          <KPICard
             title="Deforestación Alertada"
             value="14.2 Ha"
             trend="Ingesta Sentinel-2 (Anual)"
@@ -362,7 +362,7 @@ export function Dashboard() {
 
       {dimension === 'recursos' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <KPICard 
+          <KPICard
             title="Metales Pesados (Pb/As)"
             value="0.02 ppm"
             trend="Acuífero Rímac (Límite: 0.05)"
@@ -370,7 +370,7 @@ export function Dashboard() {
             color="text-amber-400"
             bg="bg-amber-400/10"
           />
-          <KPICard 
+          <KPICard
             title="Recarga de Cuencas"
             value="42.4 m³/s"
             trend="Flujo Infiltración Mantaro"
@@ -378,7 +378,7 @@ export function Dashboard() {
             color="text-blue-400"
             bg="bg-blue-400/10"
           />
-          <KPICard 
+          <KPICard
             title="Reservas Bajo Alerta"
             value="2 ANP"
             trend="Tambopata & Huascarán"
@@ -387,7 +387,7 @@ export function Dashboard() {
             bg="bg-rose-500/10"
             critical={true}
           />
-          <KPICard 
+          <KPICard
             title="pH Promedio Acuíferos"
             value="6.8 pH"
             trend="Nivel Óptimo Neutralizado"
@@ -400,7 +400,7 @@ export function Dashboard() {
 
       {/* Main Charts & Spatial Data */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Telemetry Chart */}
         <div className="lg:col-span-2 glass-panel rounded-xl p-6 border border-slate-700/50">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
@@ -442,18 +442,18 @@ export function Dashboard() {
               <AreaChart data={chartData as any[]} margin={{ left: -20, right: 10 }}>
                 <defs>
                   <linearGradient id="colorPrimary" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={dimension === 'alimentaria' ? '#10b981' : dimension === 'desastres' ? '#ef4444' : '#f59e0b'} stopOpacity={0.25}/>
-                    <stop offset="95%" stopColor={dimension === 'alimentaria' ? '#10b981' : dimension === 'desastres' ? '#ef4444' : '#f59e0b'} stopOpacity={0}/>
+                    <stop offset="5%" stopColor={dimension === 'alimentaria' ? '#10b981' : dimension === 'desastres' ? '#ef4444' : '#f59e0b'} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={dimension === 'alimentaria' ? '#10b981' : dimension === 'desastres' ? '#ef4444' : '#f59e0b'} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorSecondary" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={dimension === 'alimentaria' ? '#3b82f6' : dimension === 'desastres' ? '#f59e0b' : '#06b6d4'} stopOpacity={0.25}/>
-                    <stop offset="95%" stopColor={dimension === 'alimentaria' ? '#3b82f6' : dimension === 'desastres' ? '#f59e0b' : '#06b6d4'} stopOpacity={0}/>
+                    <stop offset="5%" stopColor={dimension === 'alimentaria' ? '#3b82f6' : dimension === 'desastres' ? '#f59e0b' : '#06b6d4'} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={dimension === 'alimentaria' ? '#3b82f6' : dimension === 'desastres' ? '#f59e0b' : '#06b6d4'} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f1f5f9' }}
                   itemStyle={{ color: '#e2e8f0', fontSize: 12 }}
                 />
@@ -489,8 +489,8 @@ export function Dashboard() {
                 onClick={() => setPanelTab('ml')}
                 className={cn(
                   "pb-1 transition-all border-b-2",
-                  panelTab === 'ml' 
-                    ? "border-emerald-500 text-slate-100" 
+                  panelTab === 'ml'
+                    ? "border-emerald-500 text-slate-100"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 )}
               >
@@ -500,15 +500,15 @@ export function Dashboard() {
                 onClick={() => setPanelTab('pinn')}
                 className={cn(
                   "pb-1 transition-all border-b-2",
-                  panelTab === 'pinn' 
-                    ? "border-emerald-500 text-slate-100" 
+                  panelTab === 'pinn'
+                    ? "border-emerald-500 text-slate-100"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 )}
               >
                 Física PINN
               </button>
             </div>
-            
+
             {panelTab === 'ml' ? (
               <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
             ) : (

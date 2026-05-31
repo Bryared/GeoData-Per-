@@ -64,7 +64,7 @@ export function Telemetria() {
       const connected = await soilAPI.checkConnection();
       const data = await soilAPI.getTelemetryData();
       setBaseSensors(data);
-      
+
       setLoraLogs([
         `[${new Date().toLocaleTimeString()}] [SYSTEM] GeoTERRA Perú Core initialized.`,
         `[${new Date().toLocaleTimeString()}] [LoRaWAN] Gateway active on 915.2 MHz (AS923). SF7 Spreading Factor.`,
@@ -85,7 +85,7 @@ export function Telemetria() {
     if (dimension === 'desastres') {
       return baseSensors.slice(0, 8).map((s, idx) => {
         const ids = [
-          'SL-INCL-301', 'TH-PYRO-402', 'SEIS-IGP-105', 'SL-INCL-302', 
+          'SL-INCL-301', 'TH-PYRO-402', 'SEIS-IGP-105', 'SL-INCL-302',
           'TH-PYRO-403', 'SEIS-IGP-106', 'SL-INCL-303', 'TH-PYRO-404'
         ];
         const locations = [
@@ -101,7 +101,7 @@ export function Telemetria() {
 
         const pos = locations[idx] || { lat: s.lat, lng: s.lng, name: 'Estación de Emergencia' };
         const id = ids[idx];
-        
+
         let ec = 0;
         let soilMoisture = 0;
         let pH = 0;
@@ -156,7 +156,7 @@ export function Telemetria() {
 
       const pos = locations[idx] || { lat: s.lat, lng: s.lng, name: 'Estación de Recursos' };
       const id = ids[idx];
-      
+
       let ec = 0;
       let soilMoisture = 0;
       let pH = 0;
@@ -210,7 +210,7 @@ export function Telemetria() {
 
     const interval = setInterval(async () => {
       await soilAPI.checkConnection();
-      
+
       setBaseSensors(prev => {
         return prev.map(s => {
           if (Math.random() > 0.7) {
@@ -298,7 +298,7 @@ export function Telemetria() {
 
   const profileChartData = useMemo(() => {
     if (!selectedSensor) return [];
-    
+
     if (dimension === 'alimentaria') {
       return [
         { name: '20 cm (Arable)', CE: selectedSensor.depths.depth20cm.ec, Humedad: selectedSensor.depths.depth20cm.moisture },
@@ -384,8 +384,8 @@ export function Telemetria() {
               onClick={() => setActiveTab('iot')}
               className={cn(
                 "px-4 py-1.5 text-sm font-semibold rounded-md transition-all",
-                activeTab === 'iot' 
-                  ? `bg-slate-700/50 ${theme.primary} border border-slate-650/40` 
+                activeTab === 'iot'
+                  ? `bg-slate-700/50 ${theme.primary} border border-slate-650/40`
                   : 'text-slate-400 hover:text-slate-200'
               )}
             >
@@ -395,8 +395,8 @@ export function Telemetria() {
               onClick={() => setActiveTab('satellite')}
               className={cn(
                 "px-4 py-1.5 text-sm font-semibold rounded-md transition-all",
-                activeTab === 'satellite' 
-                  ? `bg-slate-700/50 ${theme.primary} border border-slate-650/40` 
+                activeTab === 'satellite'
+                  ? `bg-slate-700/50 ${theme.primary} border border-slate-650/40`
                   : 'text-slate-400 hover:text-slate-200'
               )}
             >
@@ -408,7 +408,7 @@ export function Telemetria() {
 
       {activeTab === 'iot' ? (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          
+
           <div className="xl:col-span-2 space-y-6">
             <div className="glass-panel border border-slate-700/50 rounded-xl p-6">
               <div className="flex justify-between items-center mb-4">
@@ -437,8 +437,8 @@ export function Telemetria() {
                       onClick={() => setSelectedSensorId(s.id)}
                       className={cn(
                         "p-4 rounded-xl border transition-all cursor-pointer hover:border-slate-500/40",
-                        isSelected 
-                          ? `${theme.bg} border-2 ${theme.border} ${theme.glow}` 
+                        isSelected
+                          ? `${theme.bg} border-2 ${theme.border} ${theme.glow}`
                           : 'bg-slate-800/40 border-slate-700/50'
                       )}
                     >
@@ -528,7 +528,7 @@ export function Telemetria() {
                   Terminal Ingesta LoRaWAN GeoTERRA (Valle del Bajo Piura & Andes)
                 </span>
                 <div className="flex space-x-2">
-                  <button 
+                  <button
                     onClick={() => setIsLive(!isLive)}
                     className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-300 transition-colors"
                   >
@@ -647,7 +647,7 @@ export function Telemetria() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                       <XAxis dataKey="name" stroke="#64748b" fontSize={10} />
                       <YAxis stroke="#64748b" fontSize={10} />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f1f5f9' }}
                         itemStyle={{ fontSize: 11 }}
                       />
@@ -822,7 +822,7 @@ export function Telemetria() {
 
             <div className="relative rounded-xl overflow-hidden border border-slate-700/50 h-[360px] bg-[#070b13] flex items-center justify-center">
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent z-10" />
-              
+
               <div className="absolute inset-0 opacity-20 grid grid-cols-10 grid-rows-6 border border-emerald-500/10">
                 {Array.from({ length: 60 }).map((_, i) => (
                   <div key={i} className="border-r border-b border-slate-700/20 relative">
@@ -839,7 +839,7 @@ export function Telemetria() {
                 <div className="w-16 h-16 bg-cyan-500/10 border border-cyan-500/30 rounded-full flex items-center justify-center mx-auto text-cyan-400 mb-2 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
                   <Globe className="w-8 h-8 animate-pulse" />
                 </div>
-                
+
                 {dimension === 'alimentaria' && (
                   <>
                     <h3 className="text-xl font-bold text-slate-100">Cuadrante Tile: T17MQT</h3>
