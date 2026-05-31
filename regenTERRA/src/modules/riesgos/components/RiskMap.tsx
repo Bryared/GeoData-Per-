@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import RiskAlertLayer from './RiskAlertLayer';
 import type { RiskAlert } from '../../../services/alertsApi';
@@ -17,6 +18,16 @@ export default function RiskMap({
   backendMode = 'live',
   lastUpdated = null
 }: RiskMapProps) {
+  const [isLight, setIsLight] = useState(() => document.documentElement.classList.contains('light'));
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsLight(document.documentElement.classList.contains('light'));
+    };
+    window.addEventListener('geoterra_theme_changed', handleThemeChange);
+    return () => window.removeEventListener('geoterra_theme_changed', handleThemeChange);
+  }, []);
+
   return (
     <div className="w-full h-full min-h-[500px] relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
       {/* MAPA DE LEAFLET */}
@@ -29,8 +40,12 @@ export default function RiskMap({
         className="w-full h-full min-h-[500px] z-0"
       >
         <TileLayer
+          key={isLight ? 'light-map' : 'dark-map'}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url={isLight 
+            ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" 
+            : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          }
         />
 
         <RiskAlertLayer alerts={alerts} />

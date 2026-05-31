@@ -69,37 +69,52 @@
 
 /* ==========================================
    PERFIL LUMÍNICO: CLARO PROFESIONAL (Light Mode)
+   Paleta: ivory-slate (#f8fafc) + blanco puro + acentos sutiles
    ========================================== */
 
 :root.light {
-  --color-terra-bg: #f1f5f9;
-  background-color: #f1f5f9;
+  --color-terra-bg: #f8fafc;
+  background-color: #f8fafc;
+}
+
+/* Smooth transitions when toggling theme */
+.light,
+.light *,
+.light *::before,
+.light *::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
 }
 
 .light {
-  background-color: #f1f5f9 !important;
+  background-color: #f8fafc !important;
   color: #0f172a !important;
 }
 
 .light body {
-  background-color: #f1f5f9 !important;
+  background-color: #f8fafc !important;
   color: #0f172a !important;
 }
 
+/* ---- Glass panel: blanco semitransparente con blur ---- */
 .light .glass-panel {
-  background: rgba(255, 255, 255, 0.8) !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
-  box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.1), 0 2px 8px -1px rgba(148, 163, 184, 0.06) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(203, 213, 225, 0.6) !important;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 4px 16px -2px rgba(15,23,42,0.05) !important;
 }
 
+/* ---- Sidebar profesional ---- */
 .light aside {
-  background-color: #ffffff !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
-  box-shadow: 2px 0 10px rgba(148, 163, 184, 0.1) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-color: rgba(203, 213, 225, 0.7) !important;
+  box-shadow: 1px 0 12px rgba(15, 23, 42, 0.06) !important;
 }
 
 .light aside label {
-  color: #64748b !important;
+  color: #94a3b8 !important;
 }
 
 .light aside button {
@@ -107,22 +122,27 @@
 }
 
 .light aside button:hover {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-}
-
-.light nav a {
-  color: #475569 !important;
-}
-
-.light nav a:hover {
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
 }
 
+/* ---- Nav links en modo claro ---- */
+.light nav a {
+  color: #64748b !important;
+}
+
+.light nav a:hover {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+/* ---- Header ---- */
 .light header {
-  background-color: rgba(255, 255, 255, 0.8) !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
+  background: rgba(255, 255, 255, 0.90) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-color: rgba(203, 213, 225, 0.6) !important;
+  box-shadow: 0 1px 4px rgba(15,23,42,0.05) !important;
 }
 
 .light header input {
@@ -133,9 +153,10 @@
   color: #94a3b8 !important;
 }
 
+/* Search bar */
 .light header div.hidden.md\:flex {
-  background-color: #f8fafc !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
+  background-color: #f1f5f9 !important;
+  border-color: rgba(203, 213, 225, 0.8) !important;
 }
 
 .light header button {
@@ -144,128 +165,97 @@
 
 .light header button:hover {
   color: #0f172a !important;
+  background-color: #f1f5f9 !important;
 }
 
-/* Map specific dark/light toggles */
-.light [class*="bg-[#070b13]"] {
+/* ---- Fondos oscuros → blancos/grises claros ---- */
+.light [class*="bg-[#070b13]"],
+.light [class*="bg-[#0b0f19]"],
+.light [class*="bg-[#03050a]"],
+.light [class*="bg-[#090d16]"] {
   background-color: #f8fafc !important;
 }
 
-.light .bg-slate-950\/40 {
-  background-color: #ffffff !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
+.light .bg-slate-950,
+.light .bg-slate-950\/40,
+.light .bg-slate-950\/60 {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(203, 213, 225, 0.5) !important;
 }
 
+.light .bg-slate-900\/10,
+.light .bg-slate-900\/40,
+.light .bg-slate-900\/50,
+.light .bg-slate-900\/60,
+.light .bg-slate-900\/80,
+.light .bg-slate-900\/95 {
+  background-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+.light .bg-slate-800\/30,
+.light .bg-slate-800\/40,
+.light .bg-slate-800\/50,
+.light .bg-slate-800\/60,
+.light .bg-slate-800\/80 {
+  background-color: #f1f5f9 !important;
+}
+
+/* Card panels */
+.light .bg-slate-800 {
+  background-color: #e2e8f0 !important;
+}
+
+.light .bg-slate-850,
+.light .bg-slate-850\/80 {
+  background-color: #f8fafc !important;
+}
+
+/* ---- Bordes ---- */
+.light .border-slate-700\/50,
+.light .border-slate-700\/40,
+.light .border-slate-700\/30 {
+  border-color: rgba(203, 213, 225, 0.7) !important;
+}
+
+.light .border-slate-800,
+.light .border-slate-850,
+.light .border-slate-900 {
+  border-color: rgba(203, 213, 225, 0.5) !important;
+}
+
+/* ---- Jerarquía de texto ---- */
+.light .text-slate-100 { color: #0f172a !important; }
+.light .text-slate-200 { color: #1e293b !important; }
+.light .text-slate-300 { color: #334155 !important; }
+.light .text-slate-400 { color: #64748b !important; }
+.light .text-slate-450 { color: #64748b !important; }
+.light .text-slate-455 { color: #475569 !important; }
+.light .text-slate-500 { color: #94a3b8 !important; }
+
+/* ---- SVG / Recharts ---- */
 .light svg {
-  background-color: #ffffff !important;
+  background-color: transparent !important;
 }
 
 .light text {
-  fill: #334155 !important;
+  fill: #475569 !important;
 }
 
 .light text.font-mono {
   fill: #1e293b !important;
 }
 
-.light path[stroke="#334155"] {
-  stroke: #cbd5e1 !important;
+/* Chart grid lines */
+.light path[stroke="#334155"] { stroke: #e2e8f0 !important; }
+.light path[stroke="#475569"] { stroke: #cbd5e1 !important; }
+.light path[stroke="#1e293b"] { stroke: #e2e8f0 !important; }
+
+/* ---- Glow effects → reemplazar por sombras suaves ---- */
+.light .shadow-\[0_0_15px_rgba\(16\,185\,129\,0\.15\)\] {
+  box-shadow: 0 2px 8px rgba(16,185,129,0.15) !important;
 }
 
-.light path[stroke="#475569"] {
-  stroke: #94a3b8 !important;
-}
-
-.light path[stroke="#1e293b"] {
-  stroke: #e2e8f0 !important;
-}
-
-/* Card & Panels Text Overrides for compatibility */
-.light .text-slate-100 { color: #0f172a !important; }
-.light .text-slate-200 { color: #1e293b !important; }
-.light .text-slate-300 { color: #334155 !important; }
-.light .text-slate-400 { color: #475569 !important; }
-.light .text-slate-500 { color: #64748b !important; }
-
-.light [class*="bg-[#0b0f19]"] {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
-}
-
-.light .bg-slate-950 {
-  background-color: #f8fafc !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
-}
-
-.light .bg-slate-900\/60 {
-  background-color: rgba(248, 250, 252, 0.9) !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
-}
-
-.light .bg-slate-900\/50 {
-  background-color: rgba(248, 250, 252, 0.9) !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
-}
-
-.light .bg-slate-950\/60 {
-  background-color: #ffffff !important;
-  border-color: rgba(148, 163, 184, 0.25) !important;
-}
-
-.light .border-slate-700\/50 {
-  border-color: rgba(148, 163, 184, 0.3) !important;
-}
-
-.light .border-slate-800 {
-  border-color: rgba(148, 163, 184, 0.3) !important;
-}
-
-.light .border-slate-850 {
-  border-color: rgba(148, 163, 184, 0.2) !important;
-}
-
-.light .border-slate-900 {
-  border-color: rgba(148, 163, 184, 0.2) !important;
-}
-
-.light .border-slate-850\/50 {
-  border-color: rgba(148, 163, 184, 0.2) !important;
-}
-
-.light .bg-slate-800\/50 {
-  background-color: #f8fafc !important;
-  border-color: rgba(148, 163, 184, 0.3) !important;
-}
-
-.light .text-slate-455 {
-  color: #3b82f6 !important;
-}
-
-.light .text-slate-450 {
-  color: #334155 !important;
-}
-
-/* Custom Scrollbar Styles for Premium Dark Theme */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #090d16;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 9999px;
-  border: 1px solid #090d16;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
-
-/* Light theme scrollbars */
+/* ---- Modo claro: scrollbars premium ---- */
 .light ::-webkit-scrollbar-track {
   background: #f1f5f9 !important;
 }
@@ -278,3 +268,24 @@
 .light ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8 !important;
 }
+
+/* ---- Animaciones premium ---- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Leaf, Activity, Compass, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, Sun, Moon, CheckCircle2, ShieldCheck, Database, Languages } from 'lucide-react';
+import { Leaf, Activity, Compass, Settings, Menu, Bell, Search, Presentation, ShieldAlert, Droplet, Sun, Moon, CheckCircle2, ShieldCheck, Database, Languages, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useDimension } from '../context/DimensionContext';
 import { useMemo, useState, useEffect } from 'react';
@@ -20,6 +20,20 @@ export function Layout() {
     { name: t.nav.settings, href: '/settings', icon: Settings },
     { name: t.nav.pitch, href: '/pitch', icon: Presentation },
   ], [t]);
+
+  // Sidebar collapse state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('geoterra_sidebar') === 'collapsed';
+  });
+
+  // Mobile sidebar slide-out state
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    const next = !sidebarCollapsed;
+    setSidebarCollapsed(next);
+    localStorage.setItem('geoterra_sidebar', next ? 'collapsed' : 'expanded');
+  };
 
   // Modo de Datos (Escenario Controlado / PostGIS Live)
   const [dataMode, setDataMode] = useState<'controlado' | 'live'>(() => {
@@ -84,6 +98,7 @@ export function Layout() {
       document.documentElement.classList.remove('light');
       localStorage.setItem('geoterra_theme', 'dark');
     }
+    window.dispatchEvent(new Event('geoterra_theme_changed'));
   }, [isLight]);
 
   // Poll live alerts from backend and map to notifications dropdown
@@ -146,144 +161,270 @@ export function Layout() {
     return notifications.filter(n => n.unread).length;
   }, [notifications]);
 
-  // Dynamic Theme Colors depending on active Dimension
+  // Dynamic Theme Colors depending on active Dimension and light mode contrast
   const theme = useMemo(() => {
     if (dimension === 'desastres') {
       return {
         logoIcon: ShieldAlert,
-        logoClass: 'text-rose-400',
-        logoTextClass: 'from-rose-400 to-orange-400',
-        activeLinkClass: 'bg-rose-500/10 text-rose-400 shadow-[inset_4px_0_0_0_rgba(244,63,94,1)]',
-        activeIconClass: 'text-rose-400',
-        glow1: 'bg-rose-500/5',
-        glow2: 'bg-orange-500/5',
-        headerPill: 'text-rose-400 bg-rose-400/10 border-rose-400/20 shadow-[0_0_10px_rgba(244,63,94,0.15)]',
+        logoClass: isLight ? 'text-rose-600' : 'text-rose-400',
+        logoTextClass: isLight ? 'from-rose-600 to-orange-600' : 'from-rose-400 to-orange-400',
+        activeLinkClass: isLight 
+          ? 'bg-rose-100/50 text-rose-700 shadow-[inset_4px_0_0_0_rgba(225,29,72,1)]' 
+          : 'bg-rose-500/10 text-rose-400 shadow-[inset_4px_0_0_0_rgba(244,63,94,1)]',
+        activeIconClass: isLight ? 'text-rose-600' : 'text-rose-400',
+        glow1: isLight ? 'bg-rose-500/1' : 'bg-rose-500/5',
+        glow2: isLight ? 'bg-orange-500/1' : 'bg-orange-500/5',
+        headerPill: isLight 
+          ? 'text-rose-700 bg-rose-50 border-rose-200/60 shadow-sm' 
+          : 'text-rose-400 bg-rose-400/10 border-rose-400/20 shadow-[0_0_10px_rgba(244,63,94,0.15)]',
         headerPillText: 'Alerta Temprana Activa',
         badgeBg: 'from-rose-500 to-orange-500'
       };
     } else if (dimension === 'recursos') {
       return {
         logoIcon: Droplet,
-        logoClass: 'text-cyan-400',
-        logoTextClass: 'from-cyan-400 to-blue-400',
-        activeLinkClass: 'bg-cyan-500/10 text-cyan-400 shadow-[inset_4px_0_0_0_rgba(6,182,212,1)]',
-        activeIconClass: 'text-cyan-400',
-        glow1: 'bg-cyan-500/5',
-        glow2: 'bg-blue-500/5',
-        headerPill: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20 shadow-[0_0_10px_rgba(6,182,212,0.15)]',
+        logoClass: isLight ? 'text-cyan-700' : 'text-cyan-400',
+        logoTextClass: isLight ? 'from-cyan-700 to-blue-700' : 'from-cyan-400 to-blue-400',
+        activeLinkClass: isLight 
+          ? 'bg-cyan-100/50 text-cyan-800 shadow-[inset_4px_0_0_0_rgba(14,116,144,1)]' 
+          : 'bg-cyan-500/10 text-cyan-400 shadow-[inset_4px_0_0_0_rgba(6,182,212,1)]',
+        activeIconClass: isLight ? 'text-cyan-700' : 'text-cyan-400',
+        glow1: isLight ? 'bg-cyan-500/1' : 'bg-cyan-500/5',
+        glow2: isLight ? 'bg-blue-500/1' : 'bg-blue-500/5',
+        headerPill: isLight 
+          ? 'text-cyan-700 bg-cyan-50 border-cyan-200/60 shadow-sm' 
+          : 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20 shadow-[0_0_10px_rgba(6,182,212,0.15)]',
         headerPillText: 'Monitor ANP Activo',
         badgeBg: 'from-cyan-500 to-blue-500'
       };
     } else {
       return {
         logoIcon: Leaf,
-        logoClass: 'text-emerald-450',
-        logoTextClass: 'from-emerald-400 to-cyan-400',
-        activeLinkClass: 'bg-emerald-500/10 text-emerald-400 shadow-[inset_4px_0_0_0_rgba(16,185,129,1)]',
-        activeIconClass: 'text-emerald-400',
-        glow1: 'bg-emerald-500/10',
-        glow2: 'bg-blue-500/10',
-        headerPill: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]',
+        logoClass: isLight ? 'text-emerald-700' : 'text-emerald-450',
+        logoTextClass: isLight ? 'from-emerald-700 to-cyan-700' : 'from-emerald-400 to-cyan-400',
+        activeLinkClass: isLight 
+          ? 'bg-emerald-100/50 text-emerald-800 shadow-[inset_4px_0_0_0_rgba(4,120,87,1)]' 
+          : 'bg-emerald-500/10 text-emerald-400 shadow-[inset_4px_0_0_0_rgba(16,185,129,1)]',
+        activeIconClass: isLight ? 'text-emerald-700' : 'text-emerald-400',
+        glow1: isLight ? 'bg-emerald-500/2' : 'bg-emerald-500/10',
+        glow2: isLight ? 'bg-blue-500/2' : 'bg-blue-500/10',
+        headerPill: isLight 
+          ? 'text-emerald-700 bg-emerald-50 border-emerald-200/60 shadow-sm' 
+          : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]',
         headerPillText: 'Red LoRa Activa',
         badgeBg: 'from-emerald-500 to-blue-500'
       };
     }
-  }, [dimension]);
+  }, [dimension, isLight]);
 
   const LogoIcon = theme.logoIcon;
 
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex overflow-hidden selection:bg-emerald-500/30">
       
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {mobileSidebarOpen && (
+        <div 
+          onClick={() => setMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm animate-fade-in"
+        />
+      )}
+
       {/* Sidebar Container */}
-      <aside className="w-64 glass-panel border-r border-slate-700/50 hidden md:flex flex-col relative z-20 transition-all duration-350">
+      <aside className={cn(
+        "glass-panel border-r border-slate-700/50 flex flex-col shrink-0 relative transition-all duration-300 ease-in-out",
+        // Desktop layouts
+        "hidden md:flex",
+        sidebarCollapsed ? "w-16" : "w-64",
+        // Mobile drawer transition layouts
+        mobileSidebarOpen ? "fixed inset-y-0 left-0 w-64 z-50 flex shadow-2xl animate-slide-in" : ""
+      )}>
         
+        {/* Sleek Floating Collapse Toggle Button (Bebridges border, no overlap inside header) */}
+        <button
+          onClick={toggleSidebar}
+          className={cn(
+            "absolute -right-3 top-5 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 border z-30 hidden md:flex",
+            isLight
+              ? "bg-white border-slate-200 text-slate-500 hover:text-slate-800 shadow-md"
+              : "bg-slate-800 border-slate-750 text-slate-400 hover:text-slate-200 hover:bg-slate-700 shadow-lg",
+            "cursor-pointer"
+          )}
+          title={sidebarCollapsed ? "Expandir panel" : "Comprimir panel"}
+        >
+          {sidebarCollapsed
+            ? <ChevronRight className="w-3.5 h-3.5" />
+            : <ChevronLeft className="w-3.5 h-3.5" />}
+        </button>
+
         {/* Global Branding Header */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-700/50">
-          <LogoIcon className={cn("w-6 h-6 mr-2 transition-transform duration-300 hover:rotate-12", theme.logoClass)} />
-          <span className={cn("text-lg font-extrabold bg-gradient-to-r bg-clip-text text-transparent transition-all duration-300", theme.logoTextClass)}>
-            GeoTERRA Perú
-          </span>
+        <div className={cn("h-16 flex items-center border-b border-slate-700/50 transition-all duration-300 px-6", (sidebarCollapsed && !mobileSidebarOpen) ? "justify-center px-4" : "justify-start")}>
+          <div className="flex items-center min-w-0">
+            <LogoIcon className={cn("shrink-0 transition-transform duration-300 hover:rotate-12", theme.logoClass, (sidebarCollapsed && !mobileSidebarOpen) ? "w-6 h-6" : "w-6 h-6 mr-2.5")} />
+            {(!sidebarCollapsed || mobileSidebarOpen) && (
+              <span className={cn("text-lg font-extrabold bg-gradient-to-r bg-clip-text text-transparent transition-all duration-300 truncate", theme.logoTextClass)}>
+                GeoTERRA Perú
+              </span>
+            )}
+          </div>
         </div>
         
         {/* Interactive Sidebar Dimension Switcher */}
-        <div className="px-4 py-4 border-b border-slate-800/80 bg-slate-900/10 space-y-2">
-          <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest block pl-1">
-            Gobernanza Territorial
-          </label>
-          <div className="flex flex-col space-y-1">
+        {(!sidebarCollapsed || mobileSidebarOpen) ? (
+          <div className="px-4 py-4 border-b border-slate-800/80 bg-slate-900/10 space-y-2">
+            <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest block pl-1">
+              Gobernanza Territorial
+            </label>
+            <div className="flex flex-col space-y-1">
+              <button
+                onClick={() => setDimension('alimentaria')}
+                className={cn(
+                  "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center border border-transparent",
+                  dimension === 'alimentaria'
+                    ? isLight
+                      ? "bg-emerald-50 text-emerald-800 border-emerald-200/50 shadow-sm font-black"
+                      : "bg-emerald-500/10 text-emerald-450 border-emerald-500/25 shadow-sm font-black"
+                    : isLight
+                      ? "text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+                      : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 shrink-0"></span>
+                {language === 'qu' ? 'Mikhuy Ruray Amachay' : 'Seguridad Alimentaria'}
+              </button>
+              <button
+                onClick={() => setDimension('desastres')}
+                className={cn(
+                  "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center border border-transparent",
+                  dimension === 'desastres'
+                    ? isLight
+                      ? "bg-rose-50 text-rose-800 border-rose-200/50 shadow-sm font-black"
+                      : "bg-rose-500/10 text-rose-500 border-rose-500/25 shadow-sm font-black"
+                    : isLight
+                      ? "text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+                      : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-2 shrink-0 animate-pulse"></span>
+                {language === 'qu' ? 'Llakiykuna Allichay' : 'Gestión de Desastres'}
+              </button>
+              <button
+                onClick={() => setDimension('recursos')}
+                className={cn(
+                  "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center border border-transparent",
+                  dimension === 'recursos'
+                    ? isLight
+                      ? "bg-cyan-50 text-cyan-800 border-cyan-200/50 shadow-sm font-black"
+                      : "bg-cyan-500/10 text-cyan-400 border-cyan-500/25 shadow-sm font-black"
+                    : isLight
+                      ? "text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+                      : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 mr-2 shrink-0"></span>
+                {language === 'qu' ? 'Yaku Kallpachay' : 'Agua y Recursos Hídricos'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Collapsed: Beautiful corresponding Lucide icons instead of tiny dots */
+          <div className="py-3 border-b border-slate-800/80 flex flex-col items-center gap-2.5">
             <button
               onClick={() => setDimension('alimentaria')}
-              className={cn(
-                "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center border border-transparent",
+              title="Seguridad Alimentaria"
+              className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-all border cursor-pointer",
                 dimension === 'alimentaria'
-                  ? "bg-emerald-500/10 text-emerald-450 border-emerald-500/25 shadow-sm font-black"
-                  : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                  ? isLight
+                    ? "bg-emerald-100/80 border-emerald-300 text-emerald-800 shadow-sm"
+                    : "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                  : "border-transparent text-slate-500 hover:bg-slate-800/40 hover:text-slate-350"
               )}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-2 shrink-0"></span>
-              {language === 'qu' ? 'Mikhuy Ruray Amachay' : 'Seguridad Alimentaria'}
+              <Leaf className="w-4 h-4 shrink-0" />
             </button>
             <button
               onClick={() => setDimension('desastres')}
-              className={cn(
-                "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center border border-transparent",
+              title="Gestión de Desastres"
+              className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-all border cursor-pointer",
                 dimension === 'desastres'
-                  ? "bg-rose-500/10 text-rose-500 border-rose-500/25 shadow-sm font-black"
-                  : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                  ? isLight
+                    ? "bg-rose-100/80 border-rose-300 text-rose-800 shadow-sm"
+                    : "bg-rose-500/20 border-rose-500/40 text-rose-455"
+                  : "border-transparent text-slate-500 hover:bg-slate-800/40 hover:text-slate-350"
               )}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-2 shrink-0 animate-pulse"></span>
-              {language === 'qu' ? 'Llakiykuna Allichay' : 'Gestión de Desastres'}
+              <ShieldAlert className="w-4 h-4 shrink-0" />
             </button>
             <button
               onClick={() => setDimension('recursos')}
-              className={cn(
-                "w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center border border-transparent",
+              title="Agua y Recursos Hídricos"
+              className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-all border cursor-pointer",
                 dimension === 'recursos'
-                  ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/25 shadow-sm font-black"
-                  : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                  ? isLight
+                    ? "bg-cyan-100/80 border-cyan-300 text-cyan-800 shadow-sm"
+                    : "bg-cyan-500/20 border-cyan-500/40 text-cyan-400"
+                  : "border-transparent text-slate-500 hover:bg-slate-800/40 hover:text-slate-350"
               )}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-2 shrink-0"></span>
-              {language === 'qu' ? 'Yaku Kallpachay' : 'Agua y Recursos Hídricos'}
+              <Droplet className="w-4 h-4 shrink-0" />
             </button>
           </div>
-        </div>
+        )}
 
-        <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
+        <nav className={cn("flex-1 py-4 space-y-1.5 overflow-y-auto transition-all duration-300", (sidebarCollapsed && !mobileSidebarOpen) ? "px-2" : "px-4")}>
           {dynamicNavigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <NavLink
                 key={item.name}
                 to={item.href}
+                onClick={() => setMobileSidebarOpen(false)}
+                title={(sidebarCollapsed && !mobileSidebarOpen) ? item.name : undefined}
                 className={cn(
-                  'flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group text-xs font-bold',
+                  'flex items-center rounded-lg transition-all duration-200 group text-xs font-bold',
+                  (sidebarCollapsed && !mobileSidebarOpen) ? 'px-0 py-2.5 justify-center' : 'px-3 py-2.5',
                   isActive
                     ? theme.activeLinkClass
-                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                    : isLight
+                      ? 'text-slate-655 hover:bg-slate-100 hover:text-slate-850'
+                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                 )}
               >
-                <item.icon className={cn('w-4 h-4 mr-3 transition-transform group-hover:scale-110', isActive ? theme.activeIconClass : 'text-slate-500')} />
-                {item.name}
+                <item.icon className={cn(
+                  'shrink-0 transition-transform group-hover:scale-110',
+                  (sidebarCollapsed && !mobileSidebarOpen) ? 'w-5 h-5' : 'w-4 h-4 mr-3',
+                  isActive 
+                    ? theme.activeIconClass 
+                    : isLight 
+                      ? 'text-slate-450 group-hover:text-slate-600' 
+                      : 'text-slate-500'
+                )} />
+                {(!sidebarCollapsed || mobileSidebarOpen) && item.name}
               </NavLink>
             );
           })}
         </nav>
 
         {/* User Card */}
-        <div className="p-4 border-t border-slate-700/50">
-          <div className="flex items-center p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-            <div className={cn("w-8 h-8 rounded-full bg-gradient-to-tr flex items-center justify-center text-white font-black text-xs shadow-lg", theme.badgeBg)}>
-              JS
-            </div>
-            <div className="ml-3">
-              <p className="text-xs font-bold text-slate-200">{t.roleBadge}</p>
-              <p className="text-[10px] text-slate-400">ID: 1045-PRO</p>
+        {(!sidebarCollapsed || mobileSidebarOpen) ? (
+          <div className="p-4 border-t border-slate-700/50">
+            <div className={cn("flex items-center p-3 rounded-lg border", isLight ? "bg-slate-50 border-slate-200" : "bg-slate-800/50 border-slate-700/50")}>
+              <div className={cn("w-8 h-8 rounded-full bg-gradient-to-tr flex items-center justify-center text-white font-black text-xs shadow-lg shrink-0", theme.badgeBg)}>
+                JS
+              </div>
+              <div className="ml-3 min-w-0">
+                <p className={cn("text-xs font-bold truncate", isLight ? "text-slate-800" : "text-slate-200")}>{t.roleBadge}</p>
+                <p className="text-[10px] text-slate-500">ID: 1045-PRO</p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="p-3 border-t border-slate-700/50 flex justify-center">
+            <div title={t.roleBadge} className={cn("w-8 h-8 rounded-full bg-gradient-to-tr flex items-center justify-center text-white font-black text-xs shadow-lg cursor-default", theme.badgeBg)}>
+              JS
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* Main Panel Content */}
@@ -296,29 +437,32 @@ export function Layout() {
         {/* Top Header */}
         <header className="h-16 glass-panel border-b border-slate-700/50 flex items-center justify-between px-6 z-30 sticky top-0 transition-all duration-350">
           <div className="flex items-center md:hidden">
-            <Menu className="w-6 h-6 text-slate-400 cursor-pointer" />
+            <Menu 
+              onClick={() => setMobileSidebarOpen(true)}
+              className="w-6 h-6 text-slate-400 hover:text-slate-200 cursor-pointer transition-colors" 
+            />
           </div>
           
-          <div className="hidden md:flex items-center bg-slate-800/50 border border-slate-700/50 rounded-full px-4 py-1.5 focus-within:border-slate-550/50 transition-all">
+          <div className={cn("hidden md:flex items-center border rounded-full px-4 py-1.5 transition-all", isLight ? "bg-slate-50 border-slate-200 focus-within:border-slate-350" : "bg-slate-800/50 border-slate-700/50 focus-within:border-slate-550/50")}>
             <Search className="w-4 h-4 text-slate-400" />
             <input 
               type="text" 
               placeholder={t.searchPlaceholder} 
-              className="bg-transparent border-none outline-none text-xs text-slate-200 px-3 w-64 placeholder:text-slate-500"
+              className={cn("bg-transparent border-none outline-none text-xs px-3 w-64", isLight ? "text-slate-800 placeholder:text-slate-400" : "text-slate-200 placeholder:text-slate-500")}
             />
           </div>
 
           <div className="flex items-center space-x-4 relative">
             {/* Language Selector */}
-            <div className="flex items-center space-x-1.5 bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 rounded-full px-3 py-1 transition-all text-xs font-bold">
+            <div className={cn("flex items-center space-x-1.5 border rounded-full px-3 py-1 transition-all text-xs font-bold", isLight ? "bg-slate-50 hover:bg-slate-100 border-slate-200" : "bg-slate-800/40 hover:bg-slate-800 border-slate-700/40")}>
               <Languages className="w-3.5 h-3.5 text-slate-400" />
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as 'es' | 'qu')}
-                className="bg-transparent border-none outline-none text-[9px] text-slate-350 uppercase tracking-wider font-mono font-bold cursor-pointer"
+                className="bg-transparent border-none outline-none text-[9px] text-slate-400 uppercase tracking-wider font-mono font-bold cursor-pointer"
               >
-                <option value="es" className="bg-slate-900 text-slate-300">ESP</option>
-                <option value="qu" className="bg-slate-900 text-slate-300">QUE</option>
+                <option value="es" className={isLight ? "bg-white text-slate-800" : "bg-slate-900 text-slate-300"}>ESP</option>
+                <option value="qu" className={isLight ? "bg-white text-slate-800" : "bg-slate-900 text-slate-300"}>QUE</option>
               </select>
             </div>
 
@@ -328,12 +472,16 @@ export function Layout() {
               className={cn(
                 "flex items-center space-x-2 px-3 py-1.5 border rounded-full transition-all text-xs font-bold cursor-pointer",
                 dataMode === 'live' 
-                  ? "bg-emerald-500/10 text-emerald-450 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
-                  : "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
+                  ? isLight
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-300 shadow-sm"
+                    : "bg-emerald-500/10 text-emerald-450 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
+                  : isLight
+                    ? "bg-amber-50 text-amber-800 border-amber-300 shadow-sm"
+                    : "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
               )}
               title={t.modeTooltip}
             >
-              <span className={cn("w-1.5 h-1.5 rounded-full", dataMode === 'live' ? "bg-emerald-400 animate-pulse" : "bg-amber-400")}></span>
+              <span className={cn("w-1.5 h-1.5 rounded-full", dataMode === 'live' ? "bg-emerald-550 animate-pulse" : "bg-amber-500")}></span>
               <span className="text-[9px] uppercase tracking-wider font-mono">
                 {t.modeLabel} {dataMode === 'live' ? t.modeLive : t.modeControlled}
               </span>
@@ -342,13 +490,13 @@ export function Layout() {
             {/* Professional Light Mode Toggle Button */}
             <button 
               onClick={toggleTheme}
-              className="flex items-center space-x-2 px-3 py-1.5 bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 rounded-full transition-all text-xs font-bold"
+              className={cn("flex items-center space-x-2 px-3 py-1.5 border rounded-full transition-all text-xs font-bold cursor-pointer", isLight ? "bg-slate-50 hover:bg-slate-100 border-slate-200" : "bg-slate-800/40 hover:bg-slate-800 border-slate-700/40")}
               title="Alternar Perfil Lumínico del Sistema"
             >
               {isLight ? (
                 <>
-                  <Sun className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wider font-mono">Claro Profesional</span>
+                  <Sun className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="text-[9px] text-slate-700 font-bold uppercase tracking-wider font-mono">Claro Profesional</span>
                 </>
               ) : (
                 <>
@@ -363,8 +511,10 @@ export function Layout() {
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
                 className={cn(
-                  "relative p-2 text-slate-400 hover:text-slate-200 transition-colors rounded-full",
-                  showNotifications ? "bg-slate-800 text-slate-200" : "hover:bg-slate-800/30"
+                  "relative p-2 transition-colors rounded-full cursor-pointer",
+                  isLight 
+                    ? showNotifications ? "bg-slate-100 text-slate-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                    : showNotifications ? "bg-slate-800 text-slate-200" : "text-slate-400 hover:bg-slate-800/30 hover:text-slate-250"
                 )}
               >
                 <Bell className="w-5 h-5" />
@@ -382,7 +532,7 @@ export function Layout() {
                     className="fixed inset-0 z-40" 
                     onClick={() => setShowNotifications(false)} 
                   />
-                  <div className="absolute right-0 mt-3 w-96 bg-slate-900/95 border border-slate-850 rounded-xl shadow-2xl z-50 p-4 animate-fade-in font-sans glass-panel text-xs text-slate-300">
+                  <div className="absolute right-0 mt-3 w-96 bg-slate-900/95 border border-slate-850 rounded-xl shadow-2xl z-50 p-4 animate-fade-in font-sans glass-panel text-xs text-slate-350">
                     <div className="flex justify-between items-center pb-2.5 border-b border-slate-800 mb-3">
                       <span className="font-bold text-slate-200 flex items-center">
                         <ShieldAlert className="w-4 h-4 text-rose-500 mr-2" />
